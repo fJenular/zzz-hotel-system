@@ -1,0 +1,25 @@
+export default function Home() {
+  return (
+    <div style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+      <h1>🏨 ZZZ Hotel Management System</h1>
+      <p>Status: Backend Development Phase</p>
+      
+      <div style={{ marginTop: '2rem' }}>
+        <h2>✅ System Status</h2>
+        <ul>
+          <li>✅ Database: Connected</li>
+          <li>✅ API Routes: Active</li>
+          <li>🔧 Frontend: In Progress</li>
+        </ul>
+      </div>
+
+      <div style={{ marginTop: '2rem' }}>
+        <h2>🔌 API Endpoints</h2>
+        <ul>
+          <li><a href="/api/health" target="_blank">GET /api/health</a></li>
+          <li><a href="/api/rooms" target="_blank">GET /api/rooms</a></li>
+        </ul>
+      </div>
+    </div>
+  )
+}
