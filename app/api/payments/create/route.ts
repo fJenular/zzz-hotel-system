@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { snap } from '@/lib/midtrans'
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
-    
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json(
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { bookingId } = body
 
-    // Get booking with user and room details
+    // Get booking details
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select(`
@@ -35,9 +36,47 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create mock payment token (for testing)
-    const mockToken = `SNAP-${Date.now()}-${bookingId}`
-    const mockRedirectUrl = `https://app.sandbox.midtrans.com/snap/v2/vtweb/${mockToken}`
+    // Generate unique order ID
+    const orderId = `ZZZ-${bookingId.substring(0, 8)}-${Date.now()}`
+
+    // Create Midtrans Snap transaction
+    let parameter = {
+      transaction_details: {
+        order_id: orderId,
+        gross_amount: parseInt(booking.total_price.toString())
+      },
+      customer_details: {
+        email: booking.users.email,
+        first_name: booking.users.full_name,
+        phone: booking.users.phone || ''
+      },
+      enabled_payments: [
+        'credit_card',
+        'mandiri_clickpay',
+        'cimb_clicks',
+        'danamon_online',
+        'bca_klikbca',
+        'bca_klikpay',
+        'bri_epay',
+        'echannel',
+        'permata_va',
+        'bca_va',
+        'bni_va',
+        'other_va',
+        'gopay',
+        'shopeepay'
+      ],
+      credit_card: {
+        secure: true
+      },
+      expiry: {
+        start_time: new Date().toISOString(),
+        unit: 'hours',
+        duration: 24
+      }
+    }
+
+    const transaction = await snap.createTransaction(parameter)
 
     // Create payment record
     const { data: payment, error: paymentError } = await supabase
@@ -45,9 +84,11 @@ export async function POST(request: Request) {
       .insert({
         booking_id: bookingId,
         amount: booking.total_price,
-        payment_method: 'qris',
+        payment_method: 'midtrans',
         status: 'pending',
-        midtrans_order_id: `ZZZ-${bookingId}-${Date.now()}`
+        midtrans_order_id: orderId,
+        midtrans_token: transaction.token,
+        midtrans_redirect_url: transaction.redirect_url
       })
       .select()
       .single()
@@ -57,13 +98,15 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       data: {
-        token: mockToken,
-        redirect_url: mockRedirectUrl,
         paymentId: payment.id,
-        amount: payment.amount
+        orderId: orderId,
+        token: transaction.token,
+        redirect_url: transaction.redirect_url,
+        amount: booking.total_price
       }
     })
   } catch (error: any) {
+    console.error('Payment creation error:', error)
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

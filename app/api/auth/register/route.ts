@@ -1,81 +1,169 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+
+// Service role untuk admin operations (cek existing user, insert ke users table)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+// Regular client (anon key) — digunakan untuk signUp agar Supabase kirim email otomatis
+const supabaseClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email format'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  full_name: z.string().min(2, 'Name must be at least 2 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  fullName: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits')
 })
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
+    console.log('📝 Registration attempt started')
+
     const body = await request.json()
-    
+    console.log('Request body:', { email: body.email, fullName: body.fullName })
+
     // Validate input
     const validatedData = registerSchema.parse(body)
+    console.log('✅ Validation passed')
 
-    // Sign up
-    const { data, error } = await supabase.auth.signUp({
+    // Cek apakah email sudah terdaftar di tabel users
+    console.log('🔍 Checking if email exists...')
+    const { data: existingUser, error: checkError } = await supabaseAdmin
+      .from('users')
+      .select('id, email')
+      .eq('email', validatedData.email)
+      .maybeSingle()
+
+    if (checkError) {
+      console.error('❌ Email check error:', checkError)
+    }
+
+    if (existingUser) {
+      console.log('⚠️ Email already registered')
+      return NextResponse.json(
+        { success: false, error: 'Email is already registered. Please login or use forgot password.' },
+        { status: 400 }
+      )
+    }
+
+    console.log('✅ Email is available')
+
+    // Gunakan signUp() agar Supabase otomatis mengirimkan email konfirmasi
+    console.log('🔐 Creating auth user via signUp...')
+    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
       email: validatedData.email,
       password: validatedData.password,
       options: {
+        // Supabase akan kirim email konfirmasi ke link ini
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
         data: {
-          full_name: validatedData.full_name,
+          full_name: validatedData.fullName,
           phone: validatedData.phone
-        },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+        }
       }
     })
 
-    if (error) {
+    if (authError) {
+      console.error('❌ Auth signUp error:', {
+        message: authError.message,
+        status: authError.status,
+        code: authError.code
+      })
+
       return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
+        {
+          success: false,
+          error: authError.message || 'Failed to create user',
+          details: {
+            status: authError.status,
+            code: authError.code
+          }
+        },
+        { status: authError.status || 500 }
       )
     }
 
-    // Create user record in users table
-    if (data.user) {
-      const { error: userError } = await supabase
-        .from('users')
-        .insert({
-          id: data.user.id,
-          email: validatedData.email,
-          full_name: validatedData.full_name,
-          phone: validatedData.phone,
-          role: 'guest',
-          email_verified: false
-        })
-
-      if (userError) {
-        console.error('Failed to create user record:', userError.message)
-      }
+    if (!authData.user) {
+      console.error('❌ No user returned from signUp')
+      return NextResponse.json(
+        { success: false, error: 'Failed to create user account' },
+        { status: 500 }
+      )
     }
+
+    console.log('✅ Auth user created:', authData.user.id)
+
+    // Buat record di tabel users menggunakan admin (bypass RLS)
+    console.log('💾 Creating user record...')
+    const { error: insertError } = await supabaseAdmin
+      .from('users')
+      .insert({
+        id: authData.user.id,
+        email: validatedData.email,
+        full_name: validatedData.fullName,
+        phone: validatedData.phone,
+        role: 'guest',
+        email_verified: false // Akan diubah ke true setelah user klik link verifikasi
+      })
+
+    if (insertError) {
+      console.error('❌ User insert error:', insertError)
+
+      // Cleanup: hapus auth user jika insert gagal
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+
+      return NextResponse.json(
+        { success: false, error: 'Failed to create user record' },
+        { status: 500 }
+      )
+    }
+
+    console.log('✅ User record created')
+    console.log('📧 Supabase will send confirmation email automatically')
 
     return NextResponse.json({
       success: true,
+      message: 'Registration successful. Please check your email to verify your account.',
       data: {
-        user: {
-          id: data.user?.id,
-          email: data.user?.email,
-          full_name: validatedData.full_name,
-          role: 'guest'
-        },
-        message: 'Registration successful. Please check your email to verify your account.'
+        userId: authData.user.id,
+        email: validatedData.email,
+        fullName: validatedData.fullName
       }
     }, { status: 201 })
+
   } catch (error: any) {
+    console.error('❌ Registration error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error.errors },
+        {
+          success: false,
+          error: 'Validation failed',
+          details: error.errors
+        },
         { status: 400 }
       )
     }
+
     return NextResponse.json(
-      { success: false, error: error.message },
+      {
+        success: false,
+        error: error.message || 'Registration failed',
+        details: {
+          name: error.name,
+          status: error.status
+        }
+      },
       { status: 500 }
     )
   }

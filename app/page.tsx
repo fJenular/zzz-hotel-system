@@ -119,7 +119,16 @@ export default function HomePage() {
                 <span>Staff Panel</span>
               </Link>
             )}
-            <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
+            {user && user.role === 'guest' && (
+              <Link 
+                href="/dashboard"
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                <span>My Bookings</span>
+              </Link>
+            )}
+            <Link href="/contact-us" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <HelpCircle className="w-5 h-5" />
               <span>Help & Support</span>
             </Link>

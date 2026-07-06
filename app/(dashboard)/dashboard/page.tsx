@@ -2,274 +2,220 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { 
-  Calendar, Home, LogOut, Bell, Compass, ShoppingBag, 
-  MessageSquare, User, LayoutDashboard, HelpCircle, 
-  ChevronRight, RefreshCw, Clock, Tag, Sparkles
-} from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { LogOut, Home, Calendar, CreditCard } from 'lucide-react'
 
 export default function UserDashboard() {
   const router = useRouter()
   const supabase = createBrowserSupabaseClient()
   const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [bookings, setBookings] = useState<any[]>([])
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      if (!currentUser) {
-        router.push('/login')
-        return
-      }
-      const { data: userData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single()
-      setUser(userData)
-    }
-    getUser()
-  }, [])
+    const checkAuth = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        
+        if (authError || !user) {
+          console.error('Auth error:', authError)
+          router.push('/login')
+          return
+        }
 
-  const { data: bookings, isLoading, refetch } = useQuery({
-    queryKey: ['user-bookings', user?.id],
-    queryFn: async () => {
-      if (!user) return []
-      const { data } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          rooms (room_number, room_types(name, base_price))
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-      return data
-    },
-    enabled: !!user
-  })
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (userError) {
+          console.error('User fetch error:', userError)
+          setError('Failed to load user data')
+          setLoading(false)
+          return
+        }
+
+        setUser(userData)
+
+        // Fetch bookings di dalam async function
+        const { data: bookingsData } = await supabase
+          .from('bookings')
+          .select(`
+            *,
+            rooms (room_number, room_types(name, base_price))
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5)
+
+        setBookings(bookingsData || [])
+        setLoading(false)
+      } catch (err: any) {
+        console.error('Unexpected error:', err)
+        setError(err.message || 'An unexpected error occurred')
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [router, supabase.auth])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/')
   }
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'pending': 
-        return 'bg-amber-50 text-amber-700 border-amber-200'
-      case 'confirmed': 
-        return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'checked_in': 
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'checked_out': 
-        return 'bg-slate-50 text-slate-700 border-slate-200'
-      case 'cancelled': 
-        return 'bg-rose-50 text-rose-700 border-rose-200'
-      default: 
-        return 'bg-gray-50 text-gray-700 border-gray-200'
-    }
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
-  if (!user) return <div className="p-8 text-center text-gray-500 font-semibold animate-pulse">Loading dashboard...</div>
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <div className="text-red-500 mb-4">⚠️ Error</div>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => router.push('/login')}>
+              Back to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex min-h-screen bg-gray-50/50 font-sans text-gray-800 antialiased">
-      {/* LEFT SIDEBAR */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 p-6 shrink-0 justify-between">
-        <div className="space-y-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 text-xl font-bold text-gray-900 tracking-tight">
-            <span className="p-2 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-200">🏨</span>
-            <span>ZZZ HOTEL</span>
-          </Link>
-
-          {/* Navigation Links */}
-          <nav className="space-y-1">
-            <Link href="/" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <Home className="w-5 h-5" />
-              <span>Home</span>
-            </Link>
-            <Link href="/booking/select-room" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <Compass className="w-5 h-5" />
-              <span>Discover</span>
-            </Link>
-            <Link href="/facilities" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <Sparkles className="w-5 h-5" />
-              <span>Facilities</span>
-            </Link>
-            <Link href="/contact-us" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <MessageSquare className="w-5 h-5" />
-              <span>contact us</span>
-            </Link>
-            <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <User className="w-5 h-5" />
-              <span>About</span>
-            </Link>
-          </nav>
-        </div>
-
-        {/* Bottom Sidebar */}
-        <div className="space-y-4">
-          <hr className="border-gray-100" />
-          <p className="text-xs font-semibold text-gray-400 px-4 uppercase tracking-wider">Other</p>
-          <nav className="space-y-1">
-            <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-500 bg-rose-50/60 rounded-xl transition-all duration-200">
-              <ShoppingBag className="w-5 h-5 text-rose-500" />
-              <span>My Dashboard</span>
-            </Link>
-            <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <HelpCircle className="w-5 h-5" />
-              <span>Help & Support</span>
-            </Link>
-            <button 
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Log Out</span>
-            </button>
-          </nav>
-        </div>
-      </aside>
-
-      {/* MAIN CONTAINER */}
-      <div className="flex-1 flex flex-col lg:flex-row min-w-0">
-        
-        {/* CENTER COLUMN: Main Content */}
-        <main className="flex-1 overflow-y-auto px-6 py-8 space-y-8 max-w-5xl">
-          {/* Header Greeting */}
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <div className="animate-fade-in">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                My Bookings & Orders
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">Hello, {user.full_name}. View and track your hotel room reservations.</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">🏨 ZZZ Hotel</h1>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="font-semibold">{user?.full_name}</p>
+              <p className="text-sm text-gray-600">{user?.email}</p>
             </div>
-            
-            {/* Top Toolbar */}
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => refetch()}
-                className="p-2.5 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition"
-                aria-label="Refresh bookings"
-              >
-                <RefreshCw className="w-5 h-5 text-gray-600" />
-              </button>
-              <button className="p-2.5 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition relative">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
-              </button>
-              <div className="w-10 h-10 rounded-full bg-rose-100 overflow-hidden relative border-2 border-white shadow-md">
-                <Image src="https://i.pravatar.cc/100" alt="Avatar" fill />
-              </div>
-            </div>
+            <Button variant="outline" size="icon" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
+        </div>
+      </header>
 
-          {/* Bookings List Section */}
-          <div className="space-y-6">
-            {isLoading ? (
-              <div className="text-center py-16 text-gray-500 font-semibold animate-pulse">Loading your bookings...</div>
-            ) : bookings && bookings.length > 0 ? (
-              <div className="grid gap-4 animate-slide-up">
+      {/* Main */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <h2 className="text-3xl font-bold mb-8">My Dashboard</h2>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <Calendar className="w-10 h-10 text-blue-600" />
+                <div>
+                  <p className="text-2xl font-bold">{bookings.length}</p>
+                  <p className="text-gray-600">Total Bookings</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <CreditCard className="w-10 h-10 text-green-600" />
+                <div>
+                  <p className="text-2xl font-bold">
+                    {bookings.filter(b => b.status === 'confirmed').length}
+                  </p>
+                  <p className="text-gray-600">Confirmed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <Home className="w-10 h-10 text-purple-600" />
+                <div>
+                  <p className="text-2xl font-bold">
+                    {bookings.filter(b => b.status === 'pending').length}
+                  </p>
+                  <p className="text-gray-600">Pending</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Bookings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Bookings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {bookings.length > 0 ? (
+              <div className="space-y-4">
                 {bookings.map((booking) => (
-                  <Card key={booking.id} className="border border-gray-100 hover:border-gray-200 hover:shadow-sm transition bg-white rounded-2xl overflow-hidden">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2.5 flex-wrap">
-                            <h3 className="text-xl font-bold text-gray-900">
-                              Room {booking.rooms?.room_number}
-                            </h3>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusStyle(booking.status)}`}>
-                              {booking.status.replace('_', ' ').toUpperCase()}
-                            </span>
-                          </div>
-                          <p className="text-xs font-bold text-gray-500">{booking.rooms?.room_types?.name}</p>
-                          <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
-                            <Calendar className="w-3.5 h-3.5 text-rose-500" />
-                            <span>
-                              {new Date(booking.check_in).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} — {new Date(booking.check_out).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-left sm:text-right space-y-1">
-                          <div className="text-2xl font-black text-rose-500">
-                            Rp {Number(booking.total_price).toLocaleString()}
-                          </div>
-                          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            ID: {booking.id.substring(0, 8).toUpperCase()}
-                          </div>
-                          {booking.status === 'pending' && (
-                            <button 
-                              onClick={() => router.push(`/booking/payment?bookingId=${booking.id}`)}
-                              className="mt-2 px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold rounded-xl transition shadow-sm shadow-rose-200"
-                            >
-                              Pay Now
-                            </button>
-                          )}
-                          {(booking.status === 'confirmed' || booking.status === 'checked_in') && (
-                            <button 
-                              onClick={() => router.push('/restaurant/order')}
-                              className="mt-2 px-4 py-2 bg-rose-50/80 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-100 rounded-xl transition flex items-center gap-1.5"
-                            >
-                              🍕 Order Food
-                            </button>
-                          )}
-                        </div>
+                  <div key={booking.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          Room {booking.rooms?.room_number}
+                        </h3>
+                        <p className="text-gray-600">{booking.rooms?.room_types?.name}</p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          {new Date(booking.check_in).toLocaleDateString()} - {new Date(booking.check_out).toLocaleDateString()}
+                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="text-right">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {booking.status.toUpperCase()}
+                        </span>
+                        <p className="text-lg font-bold text-blue-600 mt-2">
+                          Rp {Number(booking.total_price).toLocaleString()}
+                        </p>
+                        {booking.status === 'pending' && (
+                          <Button 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={() => router.push(`/booking/payment?bookingId=${booking.id}`)}
+                          >
+                            Pay Now
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
-              <Card className="border border-gray-100 bg-white rounded-2xl shadow-sm">
-                <CardContent className="p-12 text-center space-y-4">
-                  <p className="text-gray-500 font-medium">You don&apos;t have any bookings yet</p>
-                  <button 
-                    onClick={() => router.push('/booking/select-room')}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl transition shadow-lg shadow-rose-200 text-xs"
-                  >
-                    <Compass className="w-4 h-4" />
-                    <span>Browse Available Rooms</span>
-                  </button>
-                </CardContent>
-              </Card>
+              <div className="text-center py-8">
+                <p className="text-gray-600 mb-4">You don't have any bookings yet</p>
+                <Button onClick={() => router.push('/')}>
+                  <Home className="w-4 h-4 mr-2" />
+                  Browse Rooms
+                </Button>
+              </div>
             )}
-          </div>
-        </main>
-
-        {/* RIGHT COLUMN: Quick Promotion/Help Details */}
-        <aside className="w-full lg:w-96 bg-white border-l border-gray-100 p-6 overflow-y-auto shrink-0 space-y-6">
-          <h3 className="text-lg font-bold text-gray-900 border-b border-gray-50 pb-3">Special Benefits</h3>
-
-          <div className="bg-rose-50/50 p-4 border border-rose-100 rounded-2xl space-y-3">
-            <div className="flex items-center gap-2 text-rose-600">
-              <Tag className="w-5 h-5" />
-              <span className="font-bold text-xs">Member Special Offer</span>
-            </div>
-            <p className="text-[11px] text-gray-500 leading-normal">
-              Earn reward points for every night spent at ZZZ Hotel. Redeem points for free laundry, dinner discounts, or spa vouchers.
-            </p>
-          </div>
-
-          <div className="bg-gray-50/30 p-4 border border-gray-100 rounded-2xl space-y-3">
-            <div className="flex items-center gap-2 text-gray-700">
-              <Clock className="w-5 h-5" />
-              <span className="font-bold text-xs">Late Check-Out</span>
-            </div>
-            <p className="text-[11px] text-gray-500 leading-normal">
-              Available upon request for executive guests. Check with our receptionist panel directly in the lobby.
-            </p>
-          </div>
-        </aside>
-
-      </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   )
 }

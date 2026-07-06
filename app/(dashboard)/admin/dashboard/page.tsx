@@ -2,12 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import KPIWidget from '@/components/dashboard/KPIWidget'
 import BookingChart from '@/components/dashboard/BookingChart'
 import RecentBookings from '@/components/dashboard/RecentBookings'
-import Link from 'next/link'
-import { 
-  Home, LogOut, Bell, Compass, LayoutDashboard, ShoppingBag, 
-  User, BarChart3, RefreshCw, Sparkles, CreditCard, ShieldAlert, DoorOpen
-} from 'lucide-react'
-import LogoutButton from '@/components/layout/LogoutButton'
+import AdminSidebar from '@/components/layout/AdminSidebar'
+import { Bell, LayoutDashboard, DoorOpen, CreditCard, Sparkles } from 'lucide-react'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -45,43 +41,7 @@ export default async function AdminDashboard() {
   return (
     <div className="flex min-h-screen bg-gray-50/50 font-sans text-gray-800 antialiased">
       {/* LEFT SIDEBAR */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 p-6 shrink-0 justify-between">
-        <div className="space-y-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 text-xl font-bold text-gray-900 tracking-tight">
-            <span className="p-2 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-200">🏨</span>
-            <span>ZZZ HOTEL</span>
-          </Link>
-
-          {/* Navigation Links */}
-          <nav className="space-y-1">
-            <Link href="/" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <Home className="w-5 h-5" />
-              <span>Home</span>
-            </Link>
-            <Link href="/booking/select-room" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <Compass className="w-5 h-5" />
-              <span>Discover</span>
-            </Link>
-            <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-500 bg-rose-50/60 rounded-xl transition-all duration-200">
-              <LayoutDashboard className="w-5 h-5 text-rose-500" />
-              <span>Admin Panel</span>
-            </Link>
-          </nav>
-        </div>
-
-        {/* Bottom Account details & Logout Form */}
-        <div className="space-y-4">
-          <hr className="border-gray-100" />
-          <p className="text-xs font-semibold text-gray-400 px-4 uppercase tracking-wider">Account</p>
-          <div className="px-4 py-2 bg-gray-50 rounded-xl mb-2">
-            <p className="text-xs font-bold text-gray-800">{userData?.full_name || 'System Admin'}</p>
-            <p className="text-[10px] text-gray-500 capitalize">{userData?.role || 'administrator'}</p>
-          </div>
-          
-          <LogoutButton />
-        </div>
-      </aside>
+      <AdminSidebar userName={userData?.full_name} userRole={userData?.role} />
 
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0">

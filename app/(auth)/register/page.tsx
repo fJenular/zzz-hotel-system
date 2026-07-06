@@ -2,185 +2,293 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
-import { Mail, Lock, User, Phone, ArrowLeft, ShieldCheck } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { TurnstileCaptcha } from '@/components/auth/turnstile-captcha'
+import {
+  AuthShell,
+  authIconClass,
+  authInputClass,
+  authLinkClass,
+  authPasswordInputClass,
+  authPrimaryButtonClass,
+} from '@/components/auth/auth-shell'
+import { User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle, Loader2, UserPlus } from 'lucide-react'
 import Link from 'next/link'
+
+type FieldErrors = Partial<Record<'fullName' | 'email' | 'phone' | 'password' | 'confirmPassword', string>>
 
 export default function RegisterPage() {
   const router = useRouter()
-  const supabase = createBrowserSupabaseClient()
+
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     fullName: '',
     phone: ''
   })
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+
+  const validateForm = () => {
+    const errors: FieldErrors = {}
+
+    if (!formData.fullName.trim()) {
+      errors.fullName = 'Full name is required'
+    }
+
+    if (!formData.email.includes('@') || !formData.email.includes('.')) {
+      errors.email = 'Invalid email format'
+    }
+
+    if (!formData.phone.trim() || formData.phone.length < 10) {
+      errors.phone = 'Phone number must be at least 10 digits'
+    }
+
+    if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters'
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match'
+    }
+
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+    setFieldErrors({})
+    
+    if (!validateForm()) {
+      return
+    }
+
+    if (!captchaToken && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+      setError('Please complete the captcha verification')
+      return
+    }
+
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.fullName,
-            phone: formData.phone
-          }
-        }
+      console.log('📤 Sending registration request...')
+      
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName,
+          phone: formData.phone
+        })
       })
 
-      if (error) throw error
+      const result = await response.json()
+      console.log('📥 Registration response:', result)
 
-      // Create user record
-      if (data.user) {
-        await supabase.from('users').insert({
-          id: data.user.id,
-          email: formData.email,
-          full_name: formData.fullName,
-          phone: formData.phone,
-          role: 'guest'
-        })
+      if (!result.success) {
+        if (result.error?.includes('already registered')) {
+          setFieldErrors({ email: result.error })
+        } else {
+          setError(result.error || 'Registration failed')
+        }
+        setLoading(false)
+        return
       }
 
-      alert('Registration successful! Please check your email to verify your account.')
-      router.push('/login')
-    } catch (error: any) {
-      alert(error.message || 'Registration failed')
+      // Success — redirect ke halaman verify-email
+      // User perlu klik link di email untuk memverifikasi sebelum bisa login
+      console.log('✅ Registration successful, redirecting to verify-email...')
+      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
+    } catch (err: any) {
+      console.error('❌ Unexpected error during registration:', err)
+      if (err instanceof SyntaxError) {
+        setError('Server error. Please try again later.')
+      } else {
+        setError(err.message || 'An unexpected error occurred')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50/50 px-4 font-sans text-gray-800 antialiased relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-rose-200/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-200/10 rounded-full blur-3xl pointer-events-none"></div>
+    <AuthShell
+      title="Create account"
+      description="Join ZZZ Hotel to book faster and keep your stay details in one place."
+      cardTitle="Register with email"
+      cardDescription="Tell us the essentials so we can prepare your account."
+      icon={UserPlus}
+      size="wide"
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link href="/login" className={authLinkClass}>
+            Sign in
+          </Link>
+        </>
+      }
+    >
+            <form onSubmit={handleRegister} className="space-y-4">
+              {error && (
+                <Alert variant="destructive" className="animate-shake rounded-xl">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-      <div className="w-full max-w-md space-y-6 animate-scale-up z-10 py-8">
-        
-        {/* Back Link */}
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-rose-500 transition-colors uppercase tracking-wider"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Home</span>
-        </Link>
-
-        {/* Card Panel */}
-        <div className="bg-white border border-gray-100 p-8 rounded-3xl shadow-xl shadow-rose-100/30 space-y-6">
-          
-          {/* Logo & Header */}
-          <div className="text-center space-y-2">
-            <span className="p-3 bg-rose-500 text-white text-xl rounded-2xl shadow-lg shadow-rose-200 inline-block">
-              🏨
-            </span>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Create Account</h1>
-            <p className="text-xs text-gray-400 font-medium">Join us! Create an account to begin reserving luxury stays.</p>
-          </div>
-
-          <form onSubmit={handleRegister} className="space-y-4">
-            {/* Full Name Input */}
-            <div className="space-y-1.5">
-              <label htmlFor="fullName" className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Full Name</label>
-              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus-within:border-rose-500 focus-within:bg-white transition-all duration-200">
-                <User className="w-4 h-4 text-gray-400 shrink-0" />
-                <input 
-                  id="fullName"
-                  type="text" 
-                  placeholder="John Doe"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                  className="bg-transparent border-none p-0 text-xs font-semibold text-gray-700 placeholder-gray-400 focus:ring-0 w-full"
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-sm font-medium">
+                  Full Name *
+                </Label>
+                <div className="relative">
+                  <User className={authIconClass} />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    className={authInputClass}
+                    disabled={loading}
+                  />
+                </div>
+                {fieldErrors.fullName && <p className="text-red-500 text-xs mt-1">{fieldErrors.fullName}</p>}
               </div>
-            </div>
 
-            {/* Email Input */}
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Email Address</label>
-              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus-within:border-rose-500 focus-within:bg-white transition-all duration-200">
-                <Mail className="w-4 h-4 text-gray-400 shrink-0" />
-                <input 
-                  id="email"
-                  type="email" 
-                  placeholder="yourname@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="bg-transparent border-none p-0 text-xs font-semibold text-gray-700 placeholder-gray-400 focus:ring-0 w-full"
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email Address *
+                </Label>
+                <div className="relative">
+                  <Mail className={authIconClass} />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className={authInputClass}
+                    disabled={loading}
+                    autoComplete="email"
+                  />
+                </div>
+                {fieldErrors.email && <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>}
               </div>
-            </div>
 
-            {/* Phone Number Input */}
-            <div className="space-y-1.5">
-              <label htmlFor="phone" className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Phone Number</label>
-              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus-within:border-rose-500 focus-within:bg-white transition-all duration-200">
-                <Phone className="w-4 h-4 text-gray-400 shrink-0" />
-                <input 
-                  id="phone"
-                  type="tel" 
-                  placeholder="081234567890"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="bg-transparent border-none p-0 text-xs font-semibold text-gray-700 placeholder-gray-400 focus:ring-0 w-full"
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">
+                  Phone Number *
+                </Label>
+                <div className="relative">
+                  <Phone className={authIconClass} />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="081234567890"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className={authInputClass}
+                    disabled={loading}
+                  />
+                </div>
+                {fieldErrors.phone && <p className="text-red-500 text-xs mt-1">{fieldErrors.phone}</p>}
               </div>
-            </div>
 
-            {/* Password Input */}
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Password</label>
-              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl focus-within:border-rose-500 focus-within:bg-white transition-all duration-200">
-                <Lock className="w-4 h-4 text-gray-400 shrink-0" />
-                <input 
-                  id="password"
-                  type="password" 
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="bg-transparent border-none p-0 text-xs font-semibold text-gray-700 placeholder-gray-400 focus:ring-0 w-full"
-                  required
-                  minLength={6}
-                />
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password *
+                </Label>
+                <div className="relative">
+                  <Lock className={authIconClass} />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className={authPasswordInputClass}
+                    disabled={loading}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-amber-700"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {fieldErrors.password && <p className="text-red-500 text-xs mt-1">{fieldErrors.password}</p>}
+                <p className="text-xs text-gray-500">Minimum 8 characters</p>
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 bg-rose-500 hover:bg-rose-600 disabled:bg-rose-400 text-white font-bold rounded-2xl transition shadow-lg shadow-rose-200 text-sm flex items-center justify-center gap-2 mt-2"
-            >
-              {loading ? 'Creating account...' : 'Sign Up'}
-            </button>
-          </form>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                  Confirm Password *
+                </Label>
+                <div className="relative">
+                  <Lock className={authIconClass} />
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className={authPasswordInputClass}
+                    disabled={loading}
+                    autoComplete="new-password"
+                  />
+                </div>
+                {fieldErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{fieldErrors.confirmPassword}</p>}
+              </div>
 
-          {/* Footnotes */}
-          <div className="text-center text-xs pt-2 border-t border-gray-50">
-            <span className="text-gray-400 font-medium">Already have an account? </span>
-            <Link href="/login" className="text-rose-500 hover:text-rose-600 font-bold transition">
-              Sign In
-            </Link>
-          </div>
+              {/* Captcha — tampil jika site key terkonfigurasi */}
+              {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                <div className="flex justify-center py-2">
+                  <TurnstileCaptcha
+                    onVerify={(token) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken(null)}
+                  />
+                </div>
+              )}
 
-        </div>
-
-        {/* Security badges */}
-        <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400 font-semibold">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          <span>SSL Secured Authentication</span>
-        </div>
-
-      </div>
-    </div>
+              <Button
+                type="submit"
+                className={authPrimaryButtonClass}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
+              </Button>
+            </form>
+      <style jsx global>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+          20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake {
+          animation: shake 0.5s;
+        }
+      `}</style>
+    </AuthShell>
   )
 }

@@ -6,18 +6,18 @@ import { useQuery } from '@tanstack/react-query'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CreditCard, QrCode, Building, Wallet, CheckCircle } from 'lucide-react'
+import { CreditCard, QrCode, Building, Wallet } from 'lucide-react'
+import Script from 'next/script'
 
 function PaymentContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createBrowserSupabaseClient()
-  
-  const bookingId = searchParams.get('bookingId') || ''
-  const [selectedMethod, setSelectedMethod] = useState('qris')
-  const [loading, setLoading] = useState(false)
 
-  // Get booking details
+  const bookingId = searchParams.get('bookingId') || ''
+  const [loading, setLoading] = useState(false)
+  const [snapToken, setSnapToken] = useState<string | null>(null)
+
   const { data: booking } = useQuery({
     queryKey: ['booking', bookingId],
     queryFn: async () => {
@@ -35,26 +35,15 @@ function PaymentContent() {
     enabled: !!bookingId
   })
 
-  const paymentMethods = [
-    { id: 'qris', name: 'QRIS', icon: QrCode, description: 'Scan QR from any e-wallet' },
-    { id: 'bank_transfer', name: 'Bank Transfer (VA)', icon: Building, description: 'Virtual Account from any bank' },
-    { id: 'e_wallet', name: 'E-Wallet', icon: Wallet, description: 'GoPay, OVO, Dana, ShopeePay' },
-    { id: 'credit_card', name: 'Credit Card', icon: CreditCard, description: 'Visa, Mastercard, JCB' }
-  ]
-
   const handlePayment = async () => {
     if (!bookingId) return
 
     setLoading(true)
     try {
-      // Call payment API
-      const response = await fetch('/api/payments', {
+      const response = await fetch('/api/payments/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId,
-          paymentMethod: selectedMethod
-        })
+        body: JSON.stringify({ bookingId })
       })
 
       const data = await response.json()
@@ -63,20 +52,46 @@ function PaymentContent() {
         throw new Error(data.error || 'Payment failed')
       }
 
-      // In production, redirect to Midtrans
-      // window.location.href = data.data.redirect_url
-      
-      // For demo, simulate successful payment
-      alert('Payment successful! (Demo mode)')
-      
-      // Update booking status
-      await supabase
-        .from('bookings')
-        .update({ status: 'confirmed' })
-        .eq('id', bookingId)
+      setSnapToken(data.data.token)
 
-      // Redirect to success page
-      router.push(`/booking/success?bookingId=${bookingId}`)
+      // Trigger Midtrans Snap popup
+      if (typeof window !== 'undefined' && (window as any).snap) {
+        (window as any).snap.pay(data.data.token, {
+          onSuccess: async function (result: any) {
+            console.log('Payment success:', result)
+
+            // Update booking status
+            await supabase
+              .from('bookings')
+              .update({ status: 'confirmed' })
+              .eq('id', bookingId)
+
+            // Update payment status
+            await supabase
+              .from('payments')
+              .update({
+                status: 'paid',
+                paid_at: new Date().toISOString()
+              })
+              .eq('booking_id', bookingId)
+
+            alert('Payment successful!')
+            router.push(`/booking/success?bookingId=${bookingId}`)
+          },
+          onPending: function (result: any) {
+            console.log('Payment pending:', result)
+            alert('Payment is pending. Please complete your payment.')
+            router.push(`/booking/success?bookingId=${bookingId}&status=pending`)
+          },
+          onError: function (result: any) {
+            console.log('Payment error:', result)
+            alert('Payment failed. Please try again.')
+          },
+          onClose: function () {
+            alert('You closed the popup without finishing the payment')
+          }
+        })
+      }
     } catch (error: any) {
       console.error('Error:', error)
       alert('Payment failed: ' + error.message)
@@ -90,85 +105,85 @@ function PaymentContent() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Payment</h1>
+    <>
+      {/* Midtrans Snap JS */}
+      <Script
+        src={process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true'
+          ? 'https://app.midtrans.com/snap/snap.js'
+          : 'https://app.sandbox.midtrans.com/snap/snap.js'
+        }
+        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+        strategy="afterInteractive"
+      />
 
-      <div className="space-y-6">
-        {/* Booking Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Booking Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Room</span>
-              <span className="font-semibold">Room {booking.rooms?.room_number}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Type</span>
-              <span>{booking.rooms?.room_types?.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Check-in</span>
-              <span>{new Date(booking.check_in).toLocaleDateString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Check-out</span>
-              <span>{new Date(booking.check_out).toLocaleDateString()}</span>
-            </div>
-            <div className="border-t pt-2 flex justify-between text-xl font-bold">
-              <span>Total</span>
-              <span className="text-blue-600">Rp {Number(booking.total_price).toLocaleString()}</span>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Payment</h1>
 
-        {/* Payment Methods */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Payment Method</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {paymentMethods.map((method) => {
-              const Icon = method.icon
-              return (
-                <label
-                  key={method.id}
-                  className={`flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition ${
-                    selectedMethod === method.id 
-                      ? 'border-blue-600 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value={method.id}
-                    checked={selectedMethod === method.id}
-                    onChange={(e) => setSelectedMethod(e.target.value)}
-                    className="w-5 h-5"
-                  />
-                  <Icon className="w-8 h-8 text-blue-600" />
-                  <div className="flex-1">
-                    <p className="font-semibold">{method.name}</p>
-                    <p className="text-sm text-gray-600">{method.description}</p>
-                  </div>
-                </label>
-              )
-            })}
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Booking Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Room</span>
+                <span className="font-semibold">Room {booking.rooms?.room_number}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Type</span>
+                <span>{booking.rooms?.room_types?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Check-in</span>
+                <span>{new Date(booking.check_in).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Check-out</span>
+                <span>{new Date(booking.check_out).toLocaleDateString()}</span>
+              </div>
+              <div className="border-t pt-2 flex justify-between text-xl font-bold">
+                <span>Total</span>
+                <span className="text-blue-600">Rp {Number(booking.total_price).toLocaleString()}</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Pay Button */}
-        <Button 
-          onClick={handlePayment}
-          className="w-full text-lg py-6"
-          disabled={loading}
-        >
-          {loading ? 'Processing...' : `Pay Rp ${Number(booking.total_price).toLocaleString()}`}
-        </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Methods</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 border rounded-lg">
+                  <CreditCard className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                  <p className="text-sm">Credit Card</p>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <QrCode className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                  <p className="text-sm">QRIS</p>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <Building className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                  <p className="text-sm">Bank Transfer</p>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <Wallet className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                  <p className="text-sm">E-Wallet</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button
+            onClick={handlePayment}
+            className="w-full text-lg py-6"
+            disabled={loading}
+          >
+            {loading ? 'Processing...' : `Pay Rp ${Number(booking.total_price).toLocaleString()}`}
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 

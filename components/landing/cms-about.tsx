@@ -16,7 +16,7 @@ export function CmsAbout() {
         .eq('section_name', 'about')
         .eq('is_active', true)
         .single()
-      
+
       return data?.content as any
     }
   })

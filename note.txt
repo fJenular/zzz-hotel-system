@@ -1,0 +1,3 @@
+Catatan untuk Production:
+Jika nantinya ingin mengaktifkan verifikasi email kembali, cukup ganti email_confirm: true menjadi email_confirm: false di route.ts
+ dan konfigurasi SMTP di Supabase Dashboard → Project Settings → Auth → SMTP Settings.

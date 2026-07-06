@@ -42,6 +42,7 @@ export default function RoomDetailPage() {
   const [activeTab, setActiveTab] = useState('description')
   const [user, setUser] = useState<any>(null)
   const [bookingLoading, setBookingLoading] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   // Fetch logged in user
   useEffect(() => {
@@ -149,13 +150,7 @@ export default function RoomDetailPage() {
     e.preventDefault()
     
     if (!user) {
-      alert('Please log in first to continue with booking.')
-      const currentParams = new URLSearchParams({
-        checkIn,
-        checkOut,
-        guests: guests.toString()
-      })
-      router.push(`/login?redirect=/rooms/${room.id}?${currentParams.toString()}`)
+      setShowLoginModal(true)
       return
     }
 
@@ -210,8 +205,76 @@ export default function RoomDetailPage() {
     }
   }
 
+  // Build the login redirect URL with current room path preserved
+  const loginRedirectUrl = `/login?redirect=/rooms/${room?.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`
+
   return (
     <div className="flex min-h-screen bg-white font-sans text-gray-800 antialiased">
+
+      {/* ── LOGIN REQUIRED MODAL ── */}
+      {showLoginModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          onClick={() => setShowLoginModal(false)}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+          {/* Card */}
+          <div
+            className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl shadow-rose-900/10 overflow-hidden animate-modal-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top accent bar */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-rose-500 via-red-400 to-rose-600" />
+
+            <div className="p-7">
+              {/* Icon */}
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 mx-auto">
+                <svg className="h-7 w-7 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+
+              {/* Text */}
+              <h3 className="text-center text-xl font-bold text-gray-900">Sign in to continue</h3>
+              <p className="mt-2 text-center text-sm text-gray-500 leading-relaxed">
+                You need to be logged in to complete your booking. It only takes a moment!
+              </p>
+
+              {/* Actions */}
+              <div className="mt-6 flex flex-col gap-3">
+                <a
+                  href={loginRedirectUrl}
+                  className="block w-full rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 py-3 text-center text-sm font-semibold text-white shadow-md shadow-rose-200 transition-all duration-200 hover:from-rose-700 hover:to-rose-600 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Sign In
+                </a>
+                <a
+                  href="/register"
+                  className="block w-full rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-semibold text-gray-700 transition-all duration-200 hover:border-rose-200 hover:text-rose-600"
+                >
+                  Create an account
+                </a>
+                <button
+                  onClick={() => setShowLoginModal(false)}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors mt-1"
+                >
+                  Continue browsing
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.92) translateY(12px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-modal-in { animation: modalIn 0.25s cubic-bezier(0.22,1,0.36,1) forwards; }
+      `}</style>
       {/* SLIM ICON SIDEBAR (Image 2 style) */}
       <aside className="hidden md:flex flex-col w-20 bg-white border-r border-gray-100 py-6 items-center justify-between shrink-0">
         <div className="space-y-8 flex flex-col items-center">

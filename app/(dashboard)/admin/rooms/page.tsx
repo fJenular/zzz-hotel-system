@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { 
-  Home, Compass, LayoutDashboard, DoorOpen, Plus, Trash2, Edit, Save, X, Search, LogOut, Bell
+  DoorOpen, Plus, Trash2, Edit, Save, X, Search, Bell
 } from 'lucide-react'
 import Link from 'next/link'
-import LogoutButton from '@/components/layout/LogoutButton'
+import AdminSidebar from '@/components/layout/AdminSidebar'
 
 export default function AdminRoomsPage() {
   const router = useRouter()
@@ -167,51 +167,7 @@ export default function AdminRoomsPage() {
   return (
     <div className="flex min-h-screen bg-gray-50/50 font-sans text-gray-800 antialiased">
       {/* LEFT SIDEBAR */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 p-6 shrink-0 justify-between">
-        <div className="space-y-8">
-          <Link href="/" className="flex items-center gap-3 text-xl font-bold text-gray-900 tracking-tight">
-            <span className="p-2 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-200">🏨</span>
-            <span>ZZZ HOTEL</span>
-          </Link>
-
-          <nav className="space-y-1">
-            <Link href="/" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <Home className="w-5 h-5" />
-              <span>Home</span>
-            </Link>
-            <Link href="/booking/select-room" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <Compass className="w-5 h-5" />
-              <span>Discover</span>
-            </Link>
-            <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <LayoutDashboard className="w-5 h-5" />
-              <span>Admin Panel</span>
-            </Link>
-            <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-500 bg-rose-50/60 rounded-xl transition-all duration-200">
-              <DoorOpen className="w-5 h-5 text-rose-500" />
-              <span>Rooms CRUD</span>
-            </div>
-            <Link href="/admin/bookings" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <DoorOpen className="w-5 h-5" />
-              <span>Bookings CRUD</span>
-            </Link>
-            <Link href="/admin/payments" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
-              <DoorOpen className="w-5 h-5" />
-              <span>Payments CRUD</span>
-            </Link>
-          </nav>
-        </div>
-
-        <div className="space-y-4">
-          <hr className="border-gray-100" />
-          <p className="text-xs font-semibold text-gray-400 px-4 uppercase tracking-wider">Account</p>
-          <div className="px-4 py-2 bg-gray-50 rounded-xl mb-2">
-            <p className="text-xs font-bold text-gray-800">{user?.full_name}</p>
-            <p className="text-[10px] text-gray-500 capitalize">{user?.role}</p>
-          </div>
-          <LogoutButton />
-        </div>
-      </aside>
+      <AdminSidebar userName={user?.full_name} userRole={user?.role} />
 
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0">
