@@ -70,7 +70,8 @@ export async function POST(request: Request) {
         secure: true
       },
       expiry: {
-        start_time: new Date().toISOString(),
+        // Midtrans requires format: yyyy-MM-dd hh:mm:ss Z
+        start_time: new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).replace('T', ' ') + ' +0700',
         unit: 'hours',
         duration: 24
       }

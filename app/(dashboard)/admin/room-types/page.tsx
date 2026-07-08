@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { 
-  Search, Bell, Edit, Trash2, Save, X, Plus, Award, DollarSign, Users, FileText
+  Search, Bell, Edit, Trash2, Save, X, Plus, Award, DollarSign, Users, FileText, Heart, Mail
 } from 'lucide-react'
 import AdminSidebar from '@/components/layout/AdminSidebar'
 
@@ -160,39 +160,75 @@ export default function AdminRoomTypesPage() {
   )
 
   return (
-    <div className="flex min-h-screen bg-gray-50/50 font-sans text-gray-800 antialiased">
+    <div className="flex min-h-screen bg-slate-50/50 font-sans text-slate-800 antialiased">
       {/* LEFT SIDEBAR */}
       <AdminSidebar userName={currentUser?.full_name} userRole={currentUser?.role} />
 
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+        
+        {/* HEADER BAR */}
+        <header className="bg-white border-b border-slate-100 px-8 py-5 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 font-serif">Room Types Configuration</h1>
-            <p className="text-xs text-gray-500">Configure base price, occupancy limits, and details for suites and standard rooms.</p>
+            <h1 className="text-lg font-black text-slate-900 tracking-tight">Room Types</h1>
+            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Configure hotel categories</p>
           </div>
-          <button className="p-2.5 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition relative">
-            <Bell className="w-5 h-5 text-gray-600" />
-          </button>
+          
+          <div className="flex items-center gap-6">
+            <div className="relative hidden sm:block w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search types..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-4 py-2 w-full border border-slate-100 bg-slate-50/50 rounded-2xl text-xs focus:outline-none focus:border-red-300 transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 border-r border-slate-100 pr-5">
+              <button className="p-2 text-slate-400 hover:text-red-500 transition-colors" aria-label="Favorites">
+                <Heart className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-slate-400 hover:text-red-500 transition-colors relative" aria-label="Messages">
+                <Mail className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-slate-400 hover:text-red-500 transition-colors relative" aria-label="Notifications">
+                <Bell className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-600 border border-red-100/50 text-xs font-bold font-mono">
+                {currentUser?.full_name ? currentUser.full_name.substring(0, 2).toUpperCase() : 'AD'}
+              </div>
+              <div className="hidden lg:block text-left">
+                <p className="text-xs font-black text-slate-800 leading-none">{currentUser?.full_name || 'Administrator'}</p>
+                <p className="text-[10px] text-slate-400 font-semibold mt-1 leading-none">Hotel Admin</p>
+              </div>
+            </div>
+          </div>
         </header>
 
-        <main className="flex-1 p-6 space-y-6 overflow-y-auto">
+        {/* MAIN CONTENT */}
+        <main className="flex-1 p-8 space-y-6 overflow-y-auto">
+          
           {/* Action Bar */}
           <div className="flex justify-between items-center gap-4 flex-wrap">
             <div className="relative max-w-md w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text"
-                placeholder="Search room types by name or details..."
+                placeholder="Search configurations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-full border border-neutral-200 bg-white rounded-xl text-sm focus:outline-none focus:border-amber-400 transition"
+                className="pl-9 pr-4 py-2.5 w-full border border-slate-200 bg-white rounded-2xl text-xs focus:outline-none focus:border-red-400 transition"
               />
             </div>
             
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold text-sm shadow-md shadow-amber-200 transition cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-xs tracking-wider uppercase shadow-md shadow-red-200 transition cursor-pointer"
             >
               {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
               <span>{showAddForm ? 'Cancel' : 'Add Room Type'}</span>
@@ -201,49 +237,54 @@ export default function AdminRoomTypesPage() {
 
           {/* Add Form */}
           {showAddForm && (
-            <div className="bg-white border border-neutral-200/60 p-8 rounded-2xl shadow-sm animate-scale-up space-y-6">
-              <h3 className="text-base font-bold text-neutral-800 font-serif">Add New Room Type</h3>
-              <form onSubmit={handleCreateRoomType} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white border border-slate-100 p-8 rounded-[28px] shadow-sm animate-scale-up space-y-6">
+              <div>
+                <h3 className="text-base font-black text-slate-800 tracking-tight">Add New Room Type</h3>
+                <p className="text-[10px] text-slate-405 mt-0.5">Create a room type tier</p>
+              </div>
+              
+              <form onSubmit={handleCreateRoomType} className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                
                 <div className="space-y-1.5 md:col-span-2">
-                  <label className="text-xs font-bold text-neutral-500 uppercase">Room Type Name</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Room Type Name</label>
                   <div className="relative">
-                    <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                    <Award className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       placeholder="e.g. Grand Presidential Suite"
                       value={newForm.name}
                       onChange={(e) => setNewForm({ ...newForm, name: e.target.value })}
-                      className="w-full border border-neutral-200 rounded-xl pl-9 pr-3 py-2.5 text-sm bg-white focus:border-amber-400 focus:outline-none"
+                      className="w-full border border-slate-250 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral-500 uppercase">Base Price / Night</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Base Price / Night</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                    <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="number"
                       placeholder="850000"
                       value={newForm.base_price || ''}
                       onChange={(e) => setNewForm({ ...newForm, base_price: Number(e.target.value) })}
-                      className="w-full border border-neutral-200 rounded-xl pl-9 pr-3 py-2.5 text-sm bg-white focus:border-amber-400 focus:outline-none"
+                      className="w-full border border-slate-250 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral-500 uppercase">Max Occupancy</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Max Occupancy</label>
                   <div className="relative">
-                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="number"
                       placeholder="2"
                       value={newForm.max_occupancy || ''}
                       onChange={(e) => setNewForm({ ...newForm, max_occupancy: Number(e.target.value) })}
-                      className="w-full border border-neutral-200 rounded-xl pl-9 pr-3 py-2.5 text-sm bg-white focus:border-amber-400 focus:outline-none"
+                      className="w-full border border-slate-250 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
                       required
                       min="1"
                     />
@@ -251,14 +292,14 @@ export default function AdminRoomTypesPage() {
                 </div>
 
                 <div className="space-y-1.5 md:col-span-3">
-                  <label className="text-xs font-bold text-neutral-500 uppercase">Description</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Description</label>
                   <div className="relative">
-                    <FileText className="absolute left-3 top-3 w-4 h-4 text-neutral-400" />
+                    <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                     <textarea
-                      placeholder="Describe room features, bed configuration, views, etc."
+                      placeholder="Describe room features, view configurations, etc."
                       value={newForm.description}
                       onChange={(e) => setNewForm({ ...newForm, description: e.target.value })}
-                      className="w-full border border-neutral-200 rounded-xl pl-9 pr-3 py-2 text-sm bg-white focus:border-amber-400 focus:outline-none h-16 resize-none"
+                      className="w-full border border-slate-250 rounded-2xl pl-10 pr-4 py-3 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none h-20 resize-none font-semibold"
                       required
                     />
                   </div>
@@ -267,9 +308,9 @@ export default function AdminRoomTypesPage() {
                 <div className="flex items-end justify-end md:col-span-1">
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-neutral-900 hover:bg-neutral-850 text-white font-bold rounded-xl text-sm shadow-md transition cursor-pointer"
+                    className="w-full py-3 bg-red-650 hover:bg-red-700 text-white font-bold rounded-2xl text-xs tracking-wider uppercase shadow-md transition cursor-pointer"
                   >
-                    Save Room Type
+                    Save Type
                   </button>
                 </div>
               </form>
@@ -278,74 +319,84 @@ export default function AdminRoomTypesPage() {
 
           {/* Room Types Table */}
           {loading && roomTypes.length === 0 ? (
-            <div className="text-center py-16 text-gray-500 font-semibold animate-pulse">Loading room configurations...</div>
+            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Loading configurations...</div>
           ) : (
-            <div className="bg-white border border-neutral-200/60 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white border border-slate-100 rounded-[28px] overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-100">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-slate-50">
+                  <thead className="bg-slate-50/50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Room Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Description</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Base Price</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Max Occupancy</th>
-                      <th className="px-6 py-3 text-right text-xs font-bold text-gray-400 uppercase">Actions</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Room Type</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Description</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Base Price</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Occupancy</th>
+                      <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-slate-50">
                     {filteredTypes.map((type) => (
-                      <tr key={type.id} className="hover:bg-gray-50/50 transition">
-                        <td className="px-6 py-4 font-bold text-neutral-900 text-sm">
+                      <tr key={type.id} className="hover:bg-slate-50/30 transition">
+                        
+                        {/* Type Name */}
+                        <td className="px-6 py-4 font-bold text-slate-800 text-xs">
                           {editingTypeId === type.id ? (
                             <input 
                               type="text"
                               value={editForm.name}
                               onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                              className="border border-neutral-200 rounded-lg px-2.5 py-1 text-sm focus:outline-none focus:border-amber-400 bg-white"
+                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-red-300 bg-white"
                               required
                             />
                           ) : (
                             type.name
                           )}
                         </td>
-                        <td className="px-6 py-4 text-xs text-neutral-600 max-w-[250px] truncate">
+                        
+                        {/* Description */}
+                        <td className="px-6 py-4 text-xs text-slate-500 max-w-[250px] truncate font-medium">
                           {editingTypeId === type.id ? (
                             <textarea 
                               value={editForm.description}
                               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                              className="border border-neutral-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-amber-400 bg-white w-full h-12"
+                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-red-300 bg-white w-full h-12"
                               required
                             />
                           ) : (
                             type.description
                           )}
                         </td>
-                        <td className="px-6 py-4 font-extrabold text-neutral-900 text-sm">
+                        
+                        {/* Base Price */}
+                        <td className="px-6 py-4 font-black text-slate-800 text-xs">
                           {editingTypeId === type.id ? (
                             <input 
                               type="number"
                               value={editForm.base_price}
                               onChange={(e) => setEditForm({ ...editForm, base_price: Number(e.target.value) })}
-                              className="border border-neutral-200 rounded-lg px-2.5 py-1 text-sm focus:outline-none focus:border-amber-400 bg-white w-24"
+                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-red-300 bg-white w-24"
                               required
                             />
                           ) : (
                             `Rp ${Number(type.base_price).toLocaleString()}`
                           )}
                         </td>
-                        <td className="px-6 py-4 text-xs font-semibold text-neutral-700">
+                        
+                        {/* Max Occupancy */}
+                        <td className="px-6 py-4 text-xs font-bold text-slate-700">
                           {editingTypeId === type.id ? (
                             <input 
                               type="number"
                               value={editForm.max_occupancy}
                               onChange={(e) => setEditForm({ ...editForm, max_occupancy: Number(e.target.value) })}
-                              className="border border-neutral-200 rounded-lg px-2.5 py-1 text-sm focus:outline-none focus:border-amber-400 bg-white w-16"
+                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-red-300 bg-white w-16"
                               required
                             />
                           ) : (
                             `${type.max_occupancy} Pax`
                           )}
                         </td>
+                        
+                        {/* Actions */}
                         <td className="px-6 py-4 text-right">
                           {editingTypeId === type.id ? (
                             <div className="flex gap-2 justify-end">
@@ -357,7 +408,7 @@ export default function AdminRoomTypesPage() {
                               </button>
                               <button
                                 onClick={() => setEditingTypeId(null)}
-                                className="p-1.5 text-neutral-400 hover:bg-neutral-100 rounded-lg transition cursor-pointer"
+                                className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition cursor-pointer"
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -366,15 +417,15 @@ export default function AdminRoomTypesPage() {
                             <div className="flex gap-2 justify-end">
                               <button
                                 onClick={() => handleStartEdit(type)}
-                                className="p-1.5 text-neutral-400 hover:bg-neutral-50 rounded-lg transition cursor-pointer"
+                                className="p-1.5 text-slate-400 hover:bg-slate-50 rounded-lg transition cursor-pointer"
                                 title="Edit Room Type"
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDeleteRoomType(type.id)}
-                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                                title="Delete Room Type Permanently"
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer"
+                                title="Delete Room Type"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>

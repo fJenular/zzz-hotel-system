@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { 
-  Calendar, Users, Search, SlidersHorizontal, MapPin, 
-  Bed, Bath, Square, ArrowRight, Bell, Sparkles, HelpCircle, LogOut,
-  ChevronRight, Heart, Star, Compass, ShoppingBag, MessageSquare, User, LayoutDashboard,
-  ShieldCheck, Coffee, Wifi, Tv, Home
+  Calendar, Users, ArrowRight, Bell, Sparkles, HelpCircle, LogOut,
+  Star, Compass, MessageSquare, User, LayoutDashboard, Utensils,
+  Home
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -24,7 +23,10 @@ export default function HomePage() {
   })
 
   const [user, setUser] = useState<any>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Fetch logged in user
   useEffect(() => {
@@ -37,9 +39,23 @@ export default function HomePage() {
           .eq('id', currentUser.id)
           .single()
         setUser(userData)
+        if (userData?.avatar_url) {
+          setAvatarUrl(userData.avatar_url)
+        }
       }
     }
     getUser()
+  }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setAvatarDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -58,6 +74,7 @@ export default function HomePage() {
     } catch (e) {}
     await supabase.auth.signOut()
     setUser(null)
+    setAvatarDropdownOpen(false)
     setShowLogoutModal(false)
     router.push('/')
     router.refresh()
@@ -120,19 +137,28 @@ export default function HomePage() {
               </Link>
             )}
             {user && user.role === 'guest' && (
-              <Link 
-                href="/dashboard"
-                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200"
-              >
-                <LayoutDashboard className="w-5 h-5" />
-                <span>My Bookings</span>
-              </Link>
+              <>
+                <Link 
+                  href="/my-bookings"
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200"
+                >
+                  <Calendar className="w-5 h-5" />
+                  <span>My Bookings</span>
+                </Link>
+                <Link 
+                  href="/restaurant/order"
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200"
+                >
+                  <Utensils className="w-5 h-5" />
+                  <span>Room Service</span>
+                </Link>
+              </>
             )}
             <Link href="/contact-us" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <HelpCircle className="w-5 h-5" />
               <span>Help & Support</span>
             </Link>
-            {user ? (
+            {user && user.role !== 'guest' && (
               <button 
                 onClick={() => setShowLogoutModal(true)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200"
@@ -140,7 +166,8 @@ export default function HomePage() {
                 <LogOut className="w-5 h-5" />
                 <span>Log Out</span>
               </button>
-            ) : (
+            )}
+            {!user && (
               <Link href="/login" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
                 <User className="w-5 h-5" />
                 <span>Log In</span>
@@ -164,15 +191,76 @@ export default function HomePage() {
               <p className="text-sm text-gray-500 mt-1">Explore our premium features and manage your reservations seamlessly.</p>
             </div>
             
-              {/* Top Toolbar */}
-              <div className="flex items-center gap-4">
+            {/* Top Toolbar with Avatar Dropdown */}
+            <div className="flex items-center gap-4">
               <button className="p-2.5 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition relative">
                 <Bell className="w-5 h-5 text-gray-600" />
                 <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
               </button>
               {user ? (
-                <div className="w-10 h-10 rounded-full bg-rose-100 overflow-hidden relative border-2 border-white shadow-md">
-                  <Image src="https://i.pravatar.cc/100" alt="Avatar" fill />
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setAvatarDropdownOpen(!avatarDropdownOpen)}
+                    className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md hover:opacity-80 transition"
+                  >
+                    {avatarUrl ? (
+                      <Image 
+                        src={avatarUrl} 
+                        alt="Profile" 
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-rose-100 flex items-center justify-center">
+                        <User className="w-5 h-5 text-rose-500" />
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Avatar Dropdown Menu */}
+                  {avatarDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {user?.full_name || user?.email}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      </div>
+                      <Link
+                        href="/my-bookings"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition"
+                        onClick={() => setAvatarDropdownOpen(false)}
+                      >
+                        <Calendar className="w-4 h-4" />
+                        My Bookings
+                      </Link>
+                      <Link
+                        href="/restaurant/order"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition"
+                        onClick={() => setAvatarDropdownOpen(false)}
+                      >
+                        <Utensils className="w-4 h-4" />
+                        Room Service
+                      </Link>
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition"
+                        onClick={() => setAvatarDropdownOpen(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        Profile
+                      </Link>
+                      <hr className="my-1 border-gray-100" />
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Link 
@@ -190,7 +278,7 @@ export default function HomePage() {
             <div className="space-y-2 max-w-md">
               <span className="px-3 py-1 bg-rose-500/10 text-rose-600 text-xs font-bold uppercase tracking-wider rounded-full">Promotion</span>
               <h2 className="text-3xl font-black tracking-tight text-gray-900">10% Discount!</h2>
-              <p className="text-sm text-gray-600 font-medium">Get a discount on certain days and don&apos;t miss it. Book your stay now.</p>
+              <p className="text-sm text-gray-600 font-medium">Get a discount on certain days and don't miss it. Book your stay now.</p>
             </div>
             <button 
               onClick={() => router.push('/booking/select-room')}
@@ -224,7 +312,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-gray-100 border border-gray-50">
-                <Image src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600" alt="Hotel main view" fill className="object-cover" />
+                <Image src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600" alt="Hotel main view" width={600} height={375} className="object-cover" />
               </div>
             </div>
           </section>
@@ -269,7 +357,7 @@ export default function HomePage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full overflow-hidden relative bg-gray-100">
-                    <Image src="https://i.pravatar.cc/80" alt="Reviewer" fill />
+                    <Image src="https://i.pravatar.cc/80" alt="Reviewer" width={32} height={32} />
                   </div>
                   <div>
                     <h5 className="font-bold text-[11px] text-gray-800">Sarah Jenkins</h5>
@@ -286,7 +374,7 @@ export default function HomePage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full overflow-hidden relative bg-gray-100">
-                    <Image src="https://i.pravatar.cc/90" alt="Reviewer" fill />
+                    <Image src="https://i.pravatar.cc/90" alt="Reviewer" width={32} height={32} />
                   </div>
                   <div>
                     <h5 className="font-bold text-[11px] text-gray-800">David Miller</h5>
@@ -363,7 +451,7 @@ export default function HomePage() {
           <div className="border border-gray-100 rounded-2xl p-4 bg-gray-50/20 space-y-4">
             <h4 className="font-bold text-sm text-gray-800">Featured Luxury Room</h4>
             <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-gray-100">
-              <Image src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400" alt="Featured Suite" fill className="object-cover" />
+              <Image src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400" alt="Featured Suite" width={400} height={300} className="object-cover" />
             </div>
             <div>
               <h5 className="font-bold text-sm text-gray-900">Suite Room - Executive Suite</h5>

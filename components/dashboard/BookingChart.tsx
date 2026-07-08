@@ -36,7 +36,7 @@ export default async function BookingChart() {
     })
   }
 
-  const maxCount = Math.max(...last7Days.map(d => d.count), 4) // minimum scale of 4
+  const maxCount = Math.max(...last7Days.map(d => d.count), 4)
 
   // Chart dimensions
   const width = 500
@@ -63,17 +63,27 @@ export default async function BookingChart() {
   }
 
   return (
-    <Card className="border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300 rounded-xl">
-      <CardHeader className="border-b border-gray-50 pb-4 bg-gradient-to-r from-gray-50/50 to-white">
-        <CardTitle className="text-lg font-bold text-gray-800">Bookings (Last 7 Days)</CardTitle>
+    <Card className="border border-slate-100 bg-white shadow-sm hover:shadow-md transition-all duration-300 rounded-3xl p-2">
+      <CardHeader className="pb-4 flex flex-row items-center justify-between border-b border-slate-50/50">
+        <div>
+          <CardTitle className="text-base font-black text-slate-800 tracking-tight">Reservation Stats</CardTitle>
+          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Booking analytics</p>
+        </div>
+        {/* Toggle tabs to match reference image */}
+        <div className="flex bg-slate-50 p-1 rounded-xl text-[10px] font-bold text-slate-400">
+          <button className="px-3 py-1.5 rounded-lg hover:text-slate-800 transition">Daily</button>
+          <button className="px-3 py-1.5 rounded-lg hover:text-slate-800 transition">Weekly</button>
+          <button className="px-3 py-1.5 rounded-lg bg-red-500 text-white shadow-sm transition">Monthly</button>
+        </div>
       </CardHeader>
+      
       <CardContent className="pt-6">
-        <div className="w-full h-[220px]">
+        <div className="w-full h-[200px]">
           <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
             <defs>
               <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
+                <stop offset="0%" stopColor="#dc2626" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#dc2626" stopOpacity="0.0" />
               </linearGradient>
             </defs>
 
@@ -82,13 +92,13 @@ export default async function BookingChart() {
               const y = paddingY + ratio * chartHeight
               const val = Math.round(maxCount * (1 - ratio))
               return (
-                <g key={index} className="opacity-20">
+                <g key={index} className="opacity-40">
                   <line 
                     x1={paddingX} 
                     y1={y} 
                     x2={width - paddingX} 
                     y2={y} 
-                    stroke="#9ca3af" 
+                    stroke="#e2e8f0" 
                     strokeWidth="1" 
                     strokeDasharray="4 4" 
                   />
@@ -96,7 +106,7 @@ export default async function BookingChart() {
                     x={paddingX - 10} 
                     y={y + 4} 
                     textAnchor="end" 
-                    className="text-[10px] fill-gray-500 font-medium"
+                    className="text-[9px] fill-slate-400 font-bold"
                   >
                     {val}
                   </text>
@@ -114,8 +124,8 @@ export default async function BookingChart() {
               <path 
                 d={linePath} 
                 fill="none" 
-                stroke="#f43f5e" 
-                strokeWidth="3" 
+                stroke="#dc2626" 
+                strokeWidth="3.5" 
                 strokeLinecap="round" 
                 strokeLinejoin="round"
                 className="transition-all duration-500"
@@ -128,14 +138,14 @@ export default async function BookingChart() {
                 <circle 
                   cx={p.x} 
                   cy={p.y} 
-                  r="5" 
-                  className="fill-white stroke-rose-500 stroke-2 hover:r-7 transition-all duration-200 cursor-pointer" 
+                  r="4" 
+                  className="fill-white stroke-red-600 stroke-[3px] hover:r-6 transition-all duration-200 cursor-pointer" 
                 />
                 <circle 
                   cx={p.x} 
                   cy={p.y} 
-                  r="15" 
-                  className="fill-transparent hover:fill-rose-500/10 cursor-pointer" 
+                  r="12" 
+                  className="fill-transparent hover:fill-red-500/5 cursor-pointer" 
                 />
                 <title>{`${p.isoDate}: ${p.count} bookings`}</title>
               </g>
@@ -146,9 +156,9 @@ export default async function BookingChart() {
               <text 
                 key={i} 
                 x={p.x} 
-                y={height - paddingY + 20} 
+                y={height - paddingY + 18} 
                 textAnchor="middle" 
-                className="text-[11px] fill-gray-500 font-medium"
+                className="text-[10px] fill-slate-400 font-bold"
               >
                 {p.dateStr}
               </text>

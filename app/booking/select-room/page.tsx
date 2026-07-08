@@ -60,7 +60,7 @@ function RoomSelectionContent() {
       if (!allRooms) return []
 
       // Filter by max occupancy
-      let filtered = allRooms.filter(room => 
+      let filtered = allRooms.filter((room: any) => 
         room.room_types.max_occupancy >= formData.guests
       )
 
@@ -72,8 +72,8 @@ function RoomSelectionContent() {
           .in('status', ['pending', 'confirmed', 'checked_in'])
           .or(`and(check_in.lte.${formData.checkIn},check_out.gt.${formData.checkIn}),and(check_in.lt.${formData.checkOut},check_out.gte.${formData.checkOut})`)
 
-        const bookedRoomIds = bookings?.map(b => b.room_id) || []
-        filtered = filtered.filter(r => !bookedRoomIds.includes(r.id))
+        const bookedRoomIds = bookings?.map((b: any) => b.room_id) || []
+        filtered = filtered.filter((r: any) => !bookedRoomIds.includes(r.id))
       }
 
       return filtered

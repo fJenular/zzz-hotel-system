@@ -83,10 +83,11 @@ export async function GET(request: Request) {
         } else if (role === 'housekeeping') {
           redirectPath = '/housekeeping/dashboard'
         } else {
+          // Guest redirect ke home
           redirectPath = '/'
         }
       } else {
-        // Email confirmation — redirect ke halaman sukses verifikasi
+        // Email confirmation — redirect ke halaman sukses verifikasi atau home
         if (next !== '/') {
           redirectPath = next
         } else if (role === 'admin' || role === 'super_admin') {
@@ -100,8 +101,8 @@ export async function GET(request: Request) {
         } else if (role === 'housekeeping') {
           redirectPath = '/housekeeping/dashboard'
         } else {
-          // Guest yang baru verifikasi — kirim ke halaman sukses
-          redirectPath = '/email-verified'
+          // Guest redirect ke home
+          redirectPath = '/'
         }
       }
 

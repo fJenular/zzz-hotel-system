@@ -1,36 +1,50 @@
 import type { ComponentType, ReactNode } from 'react'
-import { Hotel, Sparkles, ShieldCheck, MapPin } from 'lucide-react'
+import { Hotel } from 'lucide-react'
 import Image from 'next/image'
-
-import { Card, CardContent } from '@/components/ui/card'
 
 type AuthShellProps = {
   title: string
   description: string
-  cardTitle: string
+  cardTitle?: string
   cardDescription?: string
   icon?: ComponentType<{ className?: string }>
   children: ReactNode
   footer?: ReactNode
-  size?: 'default' | 'wide'
+  isAdmin?: boolean
 }
 
+// ─── STANDARD (GUEST / RED ACCENT) ───
 export const authInputClass =
-  'h-12 rounded-xl border-gray-200 bg-white/80 pl-11 text-gray-900 placeholder:text-gray-400 focus-visible:border-rose-500 focus-visible:ring-rose-500/20 transition-all duration-200'
+  'h-12 w-full rounded-2xl border border-slate-100 bg-slate-50/70 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus-visible:bg-white focus-visible:border-red-500 focus-visible:ring-4 focus-visible:ring-red-500/10 transition-all duration-200 outline-none text-sm'
 
 export const authPasswordInputClass =
-  'h-12 rounded-xl border-gray-200 bg-white/80 pl-11 pr-11 text-gray-900 placeholder:text-gray-400 focus-visible:border-rose-500 focus-visible:ring-rose-500/20 transition-all duration-200'
+  'h-12 w-full rounded-2xl border border-slate-100 bg-slate-50/70 pl-11 pr-11 text-slate-900 placeholder:text-slate-400 focus-visible:bg-white focus-visible:border-red-500 focus-visible:ring-4 focus-visible:ring-red-500/10 transition-all duration-200 outline-none text-sm'
 
-export const authIconClass = 'absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-rose-400/80'
+export const authIconClass = 'absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors'
 
 export const authLinkClass =
-  'font-semibold text-rose-600 underline-offset-4 transition-colors hover:text-rose-700 hover:underline'
+  'font-semibold text-red-600 underline-offset-4 transition-colors hover:text-red-700 hover:underline'
 
 export const authPrimaryButtonClass =
-  'h-12 w-full rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-red-500 text-base font-semibold text-white shadow-lg shadow-rose-500/25 transition-all duration-300 hover:from-rose-700 hover:via-rose-600 hover:to-red-600 transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer'
+  'h-12 w-full rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-500 text-base font-semibold text-white shadow-lg shadow-red-500/20 hover:shadow-red-500/30 transition-all duration-300 hover:opacity-95 transform active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2 border-0'
 
 export const authSecondaryButtonClass =
-  'h-12 w-full rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all duration-300 hover:bg-gray-50 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center gap-2 cursor-pointer'
+  'h-12 w-full rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all duration-300 hover:bg-slate-50 hover:text-red-600 hover:border-red-200 flex items-center justify-center gap-2 cursor-pointer'
+
+// ─── ADMIN (STAFF / BLACK & SLATE THEME) ───
+export const adminInputClass =
+  'h-12 w-full rounded-2xl border border-slate-800 bg-slate-900/60 pl-11 pr-4 text-white placeholder:text-slate-500 focus-visible:bg-slate-950 focus-visible:border-indigo-500 focus-visible:ring-4 focus-visible:ring-indigo-500/10 transition-all duration-200 outline-none text-sm'
+
+export const adminPasswordInputClass =
+  'h-12 w-full rounded-2xl border border-slate-800 bg-slate-900/60 pl-11 pr-11 text-white placeholder:text-slate-500 focus-visible:bg-slate-950 focus-visible:border-indigo-500 focus-visible:ring-4 focus-visible:ring-indigo-500/10 transition-all duration-200 outline-none text-sm'
+
+export const adminIconClass = 'absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 transition-colors'
+
+export const adminLinkClass =
+  'font-semibold text-indigo-400 underline-offset-4 transition-colors hover:text-indigo-300 hover:underline'
+
+export const adminPrimaryButtonClass =
+  'h-12 w-full rounded-2xl bg-gradient-to-r from-slate-900 to-black text-base font-semibold text-white border border-slate-800 shadow-lg hover:shadow-black/50 transition-all duration-300 hover:opacity-95 transform active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2'
 
 export function AuthShell({
   title,
@@ -40,116 +54,119 @@ export function AuthShell({
   icon: Icon = Hotel,
   children,
   footer,
-  size = 'default',
+  isAdmin = false,
 }: AuthShellProps) {
   return (
-    <main className="flex min-h-screen w-full bg-gray-50/50 text-gray-900">
-      {/* Left side: Premium Image Panel (Visible on Desktop) */}
-      <section className="relative hidden w-1/2 lg:flex flex-col justify-between overflow-hidden bg-gray-950 p-12 text-white">
-        {/* Background Image with elegant overlay */}
-        <div className="absolute inset-0 z-0">
-          <Image 
-            src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80" 
-            alt="Luxury Hotel Lobby" 
+    <main className={`relative flex min-h-screen w-full flex-col items-center justify-center px-4 py-16 text-slate-900 overflow-x-hidden ${isAdmin ? 'bg-slate-950 text-white' : 'bg-blue-50/50'}`}>
+      
+      {/* ─── BACKGROUND LAYOUT ─── */}
+      {!isAdmin ? (
+        <div className="absolute inset-0 z-0 select-none pointer-events-none">
+          <Image
+            src="https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?q=80&w=1600&auto=format&fit=crop"
+            alt="Sky Background"
             fill
-            className="object-cover opacity-60 scale-105 transition-transform duration-10000 hover:scale-100"
+            className="object-cover opacity-75"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-gray-950/40 to-rose-950/60" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_30%,rgba(0,0,0,0.6)_100%)]" />
+          {/* Gentle overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-100/20 via-transparent to-white/40" />
         </div>
+      ) : (
+        <div className="absolute inset-0 z-0 select-none pointer-events-none bg-[#090d16]">
+          {/* Dark tech grid pattern */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px)`,
+            backgroundSize: '48px 48px',
+          }} />
+          {/* Subtle neon glowing points */}
+          <div style={{
+            position: 'absolute', top: '-10%', right: '-15%',
+            width: '600px', height: '600px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
+            filter: 'blur(50px)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: '-10%', left: '-15%',
+            width: '500px', height: '500px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 70%)',
+            filter: 'blur(50px)',
+          }} />
+        </div>
+      )}
 
-        {/* Branding */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500 text-white shadow-md shadow-rose-900/40">
-            <Hotel className="h-5 w-5" />
+      {/* ─── TOP LEFT BRANDING ─── */}
+      <div className="absolute top-6 left-6 sm:top-8 sm:left-8 z-20 flex items-center gap-2">
+        <div className={`flex h-8 w-8 items-center justify-center rounded-xl shadow-md ${isAdmin ? 'bg-indigo-500 shadow-indigo-900/30' : 'bg-red-500 shadow-red-500/25'} text-white`}>
+          <Hotel className="h-4.5 w-4.5" />
+        </div>
+        <span className={`text-base font-bold tracking-wider ${isAdmin ? 'text-white' : 'text-slate-800'}`}>
+          ZZZ HOTEL
+        </span>
+      </div>
+
+      {/* ─── CARD CONTAINER ─── */}
+      <div className={`relative z-10 w-full max-w-[460px] rounded-[32px] border p-8 sm:p-10 backdrop-blur-xl shadow-2xl transition-all duration-300 ${
+        isAdmin 
+          ? 'bg-slate-950/80 border-slate-800/80 shadow-black/60' 
+          : 'bg-white/80 border-white/50 shadow-slate-200/50'
+      }`}>
+        
+        {/* Top Centered Icon Badge */}
+        <div className="flex justify-center mb-6">
+          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border shadow-sm ${
+            isAdmin 
+              ? 'bg-slate-900 border-slate-800 text-indigo-400' 
+              : 'bg-white border-slate-100 text-slate-800'
+          }`}>
+            <Icon className="h-6 w-6" />
           </div>
-          <span className="text-xl font-bold tracking-wider text-white">ZZZ HOTEL</span>
         </div>
 
-        {/* Mid Text */}
-        <div className="relative z-10 max-w-lg space-y-6">
-          <h2 className="text-5xl font-extrabold tracking-tight leading-tight text-white">
-            Your Gateway to <br />
-            <span className="text-rose-400">Tranquility &amp; Luxury</span>
-          </h2>
-          <p className="text-lg text-gray-300 leading-relaxed">
-            Experience world-class accommodation, award-winning fine dining, and unparalleled comfort designed just for you.
+        {/* Info Header */}
+        <div className="text-center mb-8">
+          {isAdmin && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/25 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              <span className="font-mono text-[10px] font-bold text-indigo-400 tracking-wider uppercase">ADMIN PORTAL</span>
+            </div>
+          )}
+          <h1 className={`text-2xl font-bold tracking-tight ${isAdmin ? 'text-white' : 'text-slate-900'}`}>
+            {title}
+          </h1>
+          <p className={`mt-2 text-xs leading-relaxed max-w-[320px] mx-auto ${isAdmin ? 'text-slate-400' : 'text-slate-500'}`}>
+            {description}
           </p>
-
-          {/* Micro Features list */}
-          <div className="space-y-4 pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-1 rounded-full bg-rose-500/20 text-rose-400">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-semibold text-gray-200">5-Star Luxury Suites &amp; Smart Rooms</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="p-1 rounded-full bg-rose-500/20 text-rose-400">
-                <ShieldCheck className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-semibold text-gray-200">Guaranteed Secure Booking &amp; Flexible Check-ins</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="p-1 rounded-full bg-rose-500/20 text-rose-400">
-                <MapPin className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-semibold text-gray-200">Located in the Heart of the Hospitality Hub</span>
-            </div>
-          </div>
         </div>
+
+        {/* Inner Content */}
+        <div>{children}</div>
 
         {/* Footer */}
-        <div className="relative z-10 text-xs text-gray-400">
-          © 2026 ZZZ Hotel. All rights reserved.
-        </div>
-      </section>
-
-      {/* Right side: Authentication Form Panel */}
-      <section className="relative flex w-full flex-col justify-center px-4 py-12 sm:px-6 lg:w-1/2 lg:px-16 xl:px-24">
-        {/* Soft radial gradient background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(244,63,94,0.06)_0%,transparent_50%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(244,63,94,0.04)_0%,transparent_50%)] pointer-events-none" />
-        
-        <div className="mx-auto w-full max-w-md">
-          {/* Logo on mobile only */}
-          <div className="mb-8 flex flex-col items-center text-center lg:hidden">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500 text-white shadow-md shadow-rose-200">
-              <Hotel className="h-7 w-7" />
-            </div>
-            <h1 className="text-2xl font-bold tracking-wider text-rose-600">ZZZ HOTEL</h1>
+        {footer && (
+          <div className={`mt-6 text-center text-xs ${isAdmin ? 'text-slate-500' : 'text-slate-500'}`}>
+            {footer}
           </div>
+        )}
+      </div>
 
-          {/* Icon + Title + Description */}
-          <div className="mb-8 flex flex-col items-center text-center">
-            {/* Icon badge */}
-            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white border border-gray-100 shadow-lg shadow-gray-100">
-              <Icon className="h-7 w-7 text-gray-700" />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              {title}
-            </h1>
-            <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-xs">
-              {description}
-            </p>
-          </div>
-
-          <Card className="border border-gray-100 bg-white/80 shadow-xl shadow-gray-200/50 backdrop-blur-md rounded-2xl">
-            <CardContent className="pt-8 pb-8 px-6 sm:px-8">{children}</CardContent>
-          </Card>
-
-          {footer ? (
-            <div className="mt-6 text-center text-sm text-gray-500">
-              {footer}
-            </div>
-          ) : null}
-          
-          <p className="mt-8 text-center text-xs text-gray-400 lg:hidden">
-            © 2026 ZZZ Hotel. All rights reserved.
-          </p>
-        </div>
-      </section>
+      {/* ─── GLOBAL STYLES & SHAKE KEYFRAME ─── */}
+      <style jsx global>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          15%, 45%, 75% { transform: translateX(-4px); }
+          30%, 60%, 90% { transform: translateX(4px); }
+        }
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
+        }
+        /* Custom Input focus overrides */
+        input:-webkit-autofill {
+          -webkit-box-shadow: 0 0 0 100px ${isAdmin ? '#0f172a' : '#f8fafc'} inset !important;
+          -webkit-text-fill-color: ${isAdmin ? '#ffffff' : '#0f172a'} !important;
+        }
+      `}</style>
     </main>
   )
 }

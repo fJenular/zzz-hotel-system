@@ -33,6 +33,7 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = [
     '/', 
     '/login', 
+    '/admin/login',
     '/register', 
     '/forgot-password', 
     '/reset-password',
@@ -63,12 +64,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Get user role
+  // Guest routes - accessible to all authenticated users
+  // Check BEFORE querying users table to avoid .single()/.maybeSingle() errors
+  if (pathname === '/my-bookings' || pathname === '/profile' || pathname === '/restaurant/order') {
+    return supabaseResponse
+  }
+
+  // Get user role - use maybeSingle to avoid error if no record found
   const { data: userData } = await supabase
     .from('users')
     .select('role, email_verified')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   // Check email verification
   if (!userData?.email_verified && pathname !== '/verify-email') {
@@ -137,6 +144,11 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = '/housekeeping/dashboard'
       return NextResponse.redirect(url)
+    } else {
+      // Guest redirect ke home
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
     }
   }
 
@@ -145,6 +157,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|callback|health|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

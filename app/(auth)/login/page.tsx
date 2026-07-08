@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { TurnstileCaptcha } from '@/components/auth/turnstile-captcha'
 import {
@@ -19,10 +18,6 @@ import {
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, LogIn } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
-
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback
-}
 
 function LoginForm() {
   const router = useRouter()
@@ -44,49 +39,18 @@ function LoginForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-
-    if (!captchaToken && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
-      setError('Please complete the captcha verification')
-      return
-    }
-
     setLoading(true)
 
     try {
-      // Verify captcha (skip in development if not configured)
-      if (process.env.NODE_ENV === 'production' || process.env.TURNSTILE_SECRET_KEY) {
-        const verifyResponse = await fetch('/api/auth/verify-captcha', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: captchaToken })
-        })
-
-        const contentType = verifyResponse.headers.get('content-type')
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Server error. Please try again later.')
-        }
-
-        const verifyData = await verifyResponse.json()
-
-        if (!verifyData.success) {
-          setError(verifyData.error || 'Captcha verification failed')
-          setLoading(false)
-          return
-        }
-      }
-
-      // Login user
+      // 1. Login dengan Supabase Auth
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       })
 
       if (authError) {
         if (authError.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password. Please try again.')
-        } else if (authError.message.includes('Email not confirmed')) {
-          setError('Please verify your email address. Check your inbox.')
-          router.push('/verify-email')
+          setError('Email atau password salah')
         } else {
           setError(authError.message)
         }
@@ -94,54 +58,71 @@ function LoginForm() {
         return
       }
 
-      // Get user role
+      if (!data.user) {
+        setError('Login gagal. Silakan coba lagi.')
+        setLoading(false)
+        return
+      }
+
+      // 2. Cek apakah user record ada di tabel 'users'
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('role, email_verified')
+        .select('id, email, full_name, phone, role, email_verified')
         .eq('id', data.user.id)
-        .single()
+        .maybeSingle()
 
-      if (userError) {
-        console.error('User fetch error:', userError)
-        setError('Failed to load user data')
-        setLoading(false)
+      // 3. Jika user record TIDAK ada, buat sekarang (fallback)
+      if (userError || !userData) {
+        console.log('⚠️ User record tidak ada, membuat sekarang...')
+        
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: data.user.email,
+            full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || '',
+            phone: data.user.user_metadata?.phone || '',
+            role: 'guest',
+            email_verified: true,
+            provider: data.user.app_metadata?.provider || 'email',
+          })
+
+        if (insertError) {
+          console.error('Failed to create user record:', insertError)
+          setError('Login berhasil tapi gagal memuat data profil. Silakan coba lagi.')
+          await supabase.auth.signOut()
+          setLoading(false)
+          return
+        }
+
+        router.push('/dashboard')
         return
       }
 
-      // Check email verification
-      if (!userData?.email_verified) {
-        setError('Please verify your email address.')
-        router.push('/verify-email')
-        setLoading(false)
+      // 4. Cek email verification (skip untuk OAuth users)
+      const isOAuth = data.user.app_metadata?.provider !== 'email'
+      if (!isOAuth && !userData.email_verified) {
+        await supabase.auth.signOut()
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
         return
       }
 
-      // Redirect based on role
-      const role = userData?.role || 'guest'
-
-      // If there's a redirect param and user is guest, honor it
-      if (redirectTo && redirectTo !== '/' && (role === 'guest' || !role)) {
-        router.push(redirectTo)
-        return
+      // 5. Redirect berdasarkan role
+      const role = userData.role || 'guest'
+      const roleRedirects: Record<string, string> = {
+        super_admin: '/admin/dashboard',
+        admin: '/admin/dashboard',
+        manager: '/manager/dashboard',
+        receptionist: '/receptionist/dashboard',
+        rest_staff: '/restaurant/dashboard',
+        housekeeping: '/housekeeping/dashboard',
+        guest: '/dashboard',
       }
 
-      let redirectPath = '/'
-      if (role === 'admin' || role === 'super_admin') {
-        redirectPath = '/admin/dashboard'
-      } else if (role === 'manager') {
-        redirectPath = '/manager/dashboard'
-      } else if (role === 'receptionist') {
-        redirectPath = '/receptionist/dashboard'
-      } else if (role === 'rest_staff') {
-        redirectPath = '/restaurant/dashboard'
-      } else if (role === 'housekeeping') {
-        redirectPath = '/housekeeping/dashboard'
-      }
-
-      router.push(redirectPath)
-    } catch (err: unknown) {
+      router.push(roleRedirects[role] || '/dashboard')
+    } catch (err: any) {
       console.error('Login error:', err)
-      setError(getErrorMessage(err, 'An unexpected error occurred. Please try again.'))
+      setError('Terjadi kesalahan. Silakan coba lagi.')
     } finally {
       setLoading(false)
     }
@@ -151,7 +132,6 @@ function LoginForm() {
     <AuthShell
       title="Welcome back"
       description="Sign in to continue managing stays, bookings, and hotel operations."
-      cardTitle=""
       icon={LogIn}
       footer={
         <>
@@ -164,16 +144,17 @@ function LoginForm() {
     >
       <form onSubmit={handleLogin} className="space-y-5">
         {error && (
-          <Alert variant="destructive" className="animate-shake rounded-xl border-rose-200 bg-rose-50 text-rose-700">
-            <AlertCircle className="h-4 w-4 text-rose-500" />
-            <AlertDescription className="text-rose-700">{error}</AlertDescription>
+          <Alert variant="destructive" className="animate-shake rounded-2xl border-red-200 bg-red-50 text-red-700">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            <AlertDescription className="text-red-700">{error}</AlertDescription>
           </Alert>
         )}
 
+        {/* Email */}
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
             Email Address
-          </Label>
+          </label>
           <div className="relative">
             <Mail className={authIconClass} />
             <Input
@@ -190,18 +171,11 @@ function LoginForm() {
           </div>
         </div>
 
+        {/* Password */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-              Password
-            </Label>
-            <Link
-              href="/forgot-password"
-              className="text-xs font-medium text-rose-500 underline-offset-4 hover:text-rose-600 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <label htmlFor="password" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+            Password
+          </label>
           <div className="relative">
             <Lock className={authIconClass} />
             <Input
@@ -218,17 +192,25 @@ function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-rose-500"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-red-500 p-1"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors underline-offset-4 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </div>
 
         {/* Captcha — tampil jika site key terkonfigurasi */}
         {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
-          <div className="flex justify-center py-2">
+          <div className="flex justify-center py-1">
             <TurnstileCaptcha
               onVerify={(token) => setCaptchaToken(token)}
               onExpire={() => setCaptchaToken(null)}
@@ -253,17 +235,17 @@ function LoginForm() {
         </Button>
 
         {/* Divider */}
-        <div className="relative my-2">
+        <div className="relative my-3">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-100"></div>
+            <div className="w-full border-t border-slate-100"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-3 text-xs text-gray-400">Or sign in with</span>
+          <div className="relative flex justify-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="bg-white/80 px-3 backdrop-blur-sm">Or sign in with</span>
           </div>
         </div>
 
         {/* Social Sign-in Row */}
-        <div className="flex items-center justify-center gap-4">
+        <div className="grid grid-cols-1 gap-3">
           {/* Google */}
           <button
             type="button"
@@ -280,7 +262,7 @@ function LoginForm() {
               })
               if (error) setError('Google login failed: ' + error.message)
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:border-rose-200 hover:shadow-md hover:scale-105 active:scale-95"
+            className="flex h-11 items-center justify-center rounded-2xl border border-slate-100 bg-white/95 hover:bg-slate-50 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
             aria-label="Sign in with Google"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -289,37 +271,31 @@ function LoginForm() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
+            <p className='ml-2'>Login with Google</p>
           </button>
-
         </div>
 
         {/* Demo credentials */}
-        <div className="mt-2 w-full rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-center text-xs text-gray-500">
-          <p className="mb-1 font-semibold text-gray-700">Demo Credentials</p>
-          <p>Guest: guest@example.com / Guest123!</p>
-          <p>Admin: admin@zzzhotel.com / Admin123!</p>
+        <div className="mt-4 w-full rounded-2xl border border-red-100 bg-red-50/50 p-4 text-xs text-slate-500">
+          <p className="mb-2 font-mono font-bold text-red-600 uppercase tracking-wider text-[10px]">Demo Credentials</p>
+          <div className="space-y-1 font-mono text-[11px]">
+            <p><span className="font-semibold text-slate-700">Guest:</span> guest@example.com / Guest123!</p>
+            <p><span className="font-semibold text-slate-700">Admin:</span> admin@zzzhotel.com / Admin123!</p>
+          </div>
         </div>
       </form>
-
-      <style jsx global>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-          20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        .animate-shake {
-          animation: shake 0.5s;
-        }
-      `}</style>
-    </AuthShell >
+    </AuthShell>
   )
 }
 
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-sm text-gray-500 animate-pulse">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-3 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+          <p className="text-slate-500 text-xs font-mono">Loading portal...</p>
+        </div>
       </div>
     }>
       <LoginForm />

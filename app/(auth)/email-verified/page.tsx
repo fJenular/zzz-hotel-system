@@ -13,7 +13,6 @@ import Link from 'next/link'
 export default function EmailVerifiedPage() {
   const router = useRouter()
 
-  // Auto redirect ke home setelah 5 detik
   useEffect(() => {
     const timer = setTimeout(() => {
       router.push('/')
@@ -25,28 +24,26 @@ export default function EmailVerifiedPage() {
     <AuthShell
       title="Email verified!"
       description="Your account has been successfully activated."
-      cardTitle="Welcome to ZZZ Hotel 🎉"
-      cardDescription="Your email address has been verified. You can now log in and enjoy all features."
       icon={CheckCircle}
     >
       <div className="space-y-6 text-center">
         {/* Animated checkmark */}
         <div className="flex justify-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle className="h-12 w-12 text-green-600" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50 border border-green-100 shadow-sm shadow-green-100">
+            <CheckCircle className="h-10 w-10 text-green-600 animate-pulse" />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-700">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-700">
             ✅ Account activated successfully
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 font-medium">
             You will be redirected to the homepage in 5 seconds...
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 pt-2">
           <Button asChild className={authPrimaryButtonClass}>
             <Link href="/login">
               Login to Your Account
@@ -54,7 +51,7 @@ export default function EmailVerifiedPage() {
             </Link>
           </Button>
 
-          <Button asChild variant="ghost" className="w-full text-slate-600 hover:text-slate-800">
+          <Button asChild variant="ghost" className="w-full h-12 rounded-2xl text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors font-semibold text-sm">
             <Link href="/">Go to Homepage</Link>
           </Button>
         </div>

@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
-  Home, Compass, LayoutDashboard, DoorOpen, 
-  Calendar, CreditCard, Users, Utensils, Award
+  LayoutDashboard, DoorOpen, Calendar, CreditCard, 
+  Users, Utensils, Award, Home, Compass, User
 } from 'lucide-react'
 import LogoutButton from './LogoutButton'
 
@@ -16,32 +16,32 @@ type AdminSidebarProps = {
 export default function AdminSidebar({ userName = 'Administrator', userRole = 'admin' }: AdminSidebarProps) {
   const pathname = usePathname()
 
-  const navItems = [
+  const navCategories = [
     {
       label: 'Main Site',
       items: [
-        { href: '/', label: 'Home', icon: Home },
+        { href: '/', label: 'Home Page', icon: Home },
         { href: '/booking/select-room', label: 'Discover Rooms', icon: Compass },
       ]
     },
     {
-      label: 'Admin Control Panel',
+      label: 'Core Admin',
       items: [
         { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/admin/users', label: 'Users CRUD', icon: Users },
+        { href: '/admin/users', label: 'Guests & Users', icon: Users },
       ]
     },
     {
       label: 'Hotel Management',
       items: [
-        { href: '/admin/rooms', label: 'Rooms CRUD', icon: DoorOpen },
-        { href: '/admin/room-types', label: 'Room Types CRUD', icon: Award },
-        { href: '/admin/bookings', label: 'Bookings CRUD', icon: Calendar },
-        { href: '/admin/payments', label: 'Payments CRUD', icon: CreditCard },
+        { href: '/admin/rooms', label: 'Room List', icon: DoorOpen },
+        { href: '/admin/room-types', label: 'Room Types', icon: Award },
+        { href: '/admin/bookings', label: 'Bookings', icon: Calendar },
+        { href: '/admin/payments', label: 'Payments', icon: CreditCard },
       ]
     },
     {
-      label: 'F&B Management',
+      label: 'Services',
       items: [
         { href: '/admin/menus', label: 'Restaurant Menus', icon: Utensils },
       ]
@@ -51,19 +51,27 @@ export default function AdminSidebar({ userName = 'Administrator', userRole = 'a
   const isActive = (href: string) => pathname === href
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-white border-r border-neutral-100 p-6 shrink-0 justify-between min-h-screen">
-      <div className="space-y-6">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 text-xl font-bold text-neutral-900 tracking-tight">
-          <span className="p-2 bg-amber-500 text-neutral-950 rounded-xl shadow-md shadow-amber-200/50">🏨</span>
-          <span className="font-serif tracking-wider">ZZZ HOTEL</span>
+    <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-100 p-6 shrink-0 justify-between min-h-screen">
+      <div className="space-y-8">
+        
+        {/* Branding (Mimics 'travl' design in reference image) */}
+        <Link href="/admin/dashboard" className="flex items-center gap-3 transition-opacity hover:opacity-90">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-600 text-white shadow-lg shadow-red-500/20">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 21V9.75A2.25 2.25 0 0017.25 7.5h-10.5A2.25 2.25 0 004.5 9.75V21m3.5-11.25h.008v.008H8V9.75zm.562 0h.008v.008H8.562V9.75zM12 9.75h.008v.008H12V9.75zm.562 0h.008v.008H12.562V9.75zM16.5 9.75h.008v.008H16.5V9.75zm.562 0h.008v.008H17.062V9.75zM15 21v-5.25a2.25 2.25 0 00-2.25-2.25h-1.5A2.25 2.25 0 009 15.75V21" />
+            </svg>
+          </div>
+          <div>
+            <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">zzz-hotel</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">Admin Dashboard</span>
+          </div>
         </Link>
 
         {/* Navigation Categories */}
-        <nav className="space-y-5">
-          {navItems.map((category, idx) => (
-            <div key={idx} className="space-y-1">
-              <p className="text-[10px] font-bold text-neutral-400 px-4 uppercase tracking-widest">{category.label}</p>
+        <nav className="space-y-6">
+          {navCategories.map((category, idx) => (
+            <div key={idx} className="space-y-1.5">
+              <p className="text-[10px] font-bold text-slate-400 px-3 uppercase tracking-widest">{category.label}</p>
               <div className="space-y-0.5">
                 {category.items.map((item) => {
                   const active = isActive(item.href)
@@ -72,13 +80,13 @@ export default function AdminSidebar({ userName = 'Administrator', userRole = 'a
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                      className={`flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-2xl transition-all duration-200 ${
                         active
-                          ? 'text-amber-700 bg-amber-50/70 shadow-sm'
-                          : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900'
+                          ? 'text-red-600 bg-red-50/50 shadow-sm border border-red-100/20'
+                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                       }`}
                     >
-                      <Icon className={`w-4 h-4 ${active ? 'text-amber-600' : 'text-neutral-400'}`} />
+                      <Icon className={`w-4.5 h-4.5 ${active ? 'text-red-500' : 'text-slate-400'}`} />
                       <span>{item.label}</span>
                     </Link>
                   )
@@ -89,14 +97,26 @@ export default function AdminSidebar({ userName = 'Administrator', userRole = 'a
         </nav>
       </div>
 
-      {/* Bottom Profile details & Logout Button */}
-      <div className="space-y-4 pt-4 border-t border-neutral-100">
-        <p className="text-[10px] font-bold text-neutral-400 px-4 uppercase tracking-widest">Account</p>
-        <div className="px-4 py-2.5 bg-neutral-50 border border-neutral-100/50 rounded-xl mb-2">
-          <p className="text-xs font-bold text-neutral-800 truncate">{userName}</p>
-          <p className="text-[10px] text-neutral-500 capitalize">{userRole?.replace('_', ' ')}</p>
+      {/* Bottom Profile Details & Logout (Pill format similar to reference image card) */}
+      <div className="space-y-4 pt-4 border-t border-slate-100">
+        <div className="flex items-center gap-3 px-2 py-1.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+            <User className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-slate-800 truncate leading-none">{userName}</p>
+            <p className="text-[10px] text-slate-400 font-semibold capitalize mt-1 leading-none">{userRole?.replace('_', ' ')}</p>
+          </div>
         </div>
-        <LogoutButton />
+        
+        <div className="px-2">
+          <LogoutButton />
+        </div>
+        
+        <p className="text-[9px] text-slate-400 font-medium text-center leading-relaxed">
+          ZZZ Hotel Admin Dashboard<br />
+          © 2026 All Rights Reserved
+        </p>
       </div>
     </aside>
   )
