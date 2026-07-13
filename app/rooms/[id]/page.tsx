@@ -123,24 +123,50 @@ export default function RoomDetailPage() {
     )
   }
 
-  // Set images based on type
-  const getRoomImages = (type: string) => {
-    const name = type?.toLowerCase() || ''
-    if (name.includes('family')) {
+  // Parse facilities/amenities from DB (could be array or JSON string)
+  const parseFacilities = (val: any): string[] => {
+    if (!val) return []
+    if (Array.isArray(val)) return val
+    try { return JSON.parse(val) } catch { return [] }
+  }
+
+  // Set images based on Nusantara/Indonesian type names with fallback
+  const getRoomImages = (room: any): string[] => {
+    // Use room-level image_url if available
+    if (room.image_url) {
+      return [
+        room.image_url,
+        'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400',
+        'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400',
+        'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400',
+      ]
+    }
+    // Use room_type image_url if available
+    if (room.room_types?.image_url) {
+      return [
+        room.room_types.image_url,
+        'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400',
+        'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400',
+        'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400',
+      ]
+    }
+    const name = room.room_types?.name?.toLowerCase() || ''
+    // Nusantara name matching
+    if (name.includes('keluarga') || name.includes('family') || name.includes('pendopo')) {
       return [
         'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800',
         'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400',
         'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400',
         'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400',
       ]
-    } else if (name.includes('suite')) {
+    } else if (name.includes('suite') || name.includes('samudra') || name.includes('puri')) {
       return [
         'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800',
         'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400',
         'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400',
         'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400',
       ]
-    } else if (name.includes('deluxe')) {
+    } else if (name.includes('candi') || name.includes('biru') || name.includes('deluxe') || name.includes('serambi')) {
       return [
         'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800',
         'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400',
@@ -157,8 +183,15 @@ export default function RoomDetailPage() {
     }
   }
 
-  const images = getRoomImages(room.room_types.name)
-  const roomFeatures = { beds: room.room_types.name.toLowerCase().includes('family') ? 3 : room.room_types.name.toLowerCase().includes('suite') ? 2 : room.room_types.name.toLowerCase().includes('deluxe') ? 2 : 1 }
+  const images = getRoomImages(room)
+  const typeName = room.room_types?.name?.toLowerCase() || ''
+  const bedCount = room.room_types?.bed_configuration ||
+    (typeName.includes('keluarga') || typeName.includes('pendopo') ? '1 King Bed + 2 Single Bed' :
+     typeName.includes('suite') || typeName.includes('samudra') || typeName.includes('puri') ? '1 King Bed + 1 Queen Sofa Bed' :
+     typeName.includes('candi') || typeName.includes('serambi') ? '1 King Bed + 1 Sofa Bed' : '1 King Bed atau 2 Single Bed')
+  const maxOcc = room.room_types?.max_occupancy || 2
+  const roomFacilities = parseFacilities(room.room_types?.facilities)
+  const roomAmenities = parseFacilities(room.room_types?.amenities)
 
   // Calculations
   const dateDiff = checkIn && checkOut ? new Date(checkOut).getTime() - new Date(checkIn).getTime() : 0
@@ -227,18 +260,18 @@ export default function RoomDetailPage() {
               .from('bookings')
               .update({ status: 'confirmed' })
               .eq('id', booking.id)
-            alert('Payment successful! Your reservation has been confirmed.')
+            alert('Pembayaran berhasil! Reservasi Anda telah dikonfirmasi.')
             router.push(`/booking/success?bookingId=${booking.id}`)
           },
           onPending: function () {
-            alert('Payment is pending. Please complete your payment.')
+            alert('Pembayaran ditangguhkan. Silakan selesaikan pembayaran Anda.')
             router.push(`/booking/success?bookingId=${booking.id}&status=pending`)
           },
           onError: function () {
-            alert('Payment failed. Please try again.')
+            alert('Pembayaran gagal. Silakan coba kembali.')
           },
           onClose: function () {
-            alert('You closed the popup without finishing the payment')
+            alert('Anda menutup jendela pembayaran tanpa menyelesaikan transaksi.')
           }
         })
       } else {
@@ -268,19 +301,19 @@ export default function RoomDetailPage() {
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 mx-auto">
                 <User className="h-7 w-7 text-rose-500" />
               </div>
-              <h3 className="text-center text-xl font-bold text-gray-900">Sign in to continue</h3>
+              <h3 className="text-center text-xl font-bold text-gray-900">Masuk untuk melanjutkan</h3>
               <p className="mt-2 text-center text-sm text-gray-500 leading-relaxed">
-                You need to be logged in to complete your booking.
+                Anda perlu masuk ke akun terlebih dahulu untuk menyelesaikan proses reservasi kamar.
               </p>
               <div className="mt-6 flex flex-col gap-3">
                 <a href={loginRedirectUrl} className="block w-full rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 py-3 text-center text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:from-rose-700 hover:to-rose-600">
-                  Sign In
+                  Masuk
                 </a>
                 <a href="/register" className="block w-full rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-semibold text-gray-700 transition hover:border-rose-200 hover:text-rose-600">
-                  Create an account
+                  Buat Akun Baru
                 </a>
                 <button onClick={() => setShowLoginModal(false)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors mt-1">
-                  Continue browsing
+                  Lanjutkan mencari kamar
                 </button>
               </div>
             </div>
@@ -299,40 +332,40 @@ export default function RoomDetailPage() {
           <nav className="space-y-1">
             <Link href="/" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <Home className="w-5 h-5" />
-              <span>Home</span>
+              <span>Beranda</span>
             </Link>
             <Link href="/booking/select-room" className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-500 bg-rose-50/60 rounded-xl transition-all duration-200">
               <Compass className="w-5 h-5 text-rose-500" />
-              <span>Discover</span>
+              <span>Cari Kamar</span>
             </Link>
             <Link href="/facilities" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <Sparkles className="w-5 h-5" />
-              <span>Facilities</span>
+              <span>Fasilitas</span>
             </Link>
             <Link href="/contact-us" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <MessageSquare className="w-5 h-5" />
-              <span>Contact Us</span>
+              <span>Hubungi Kami</span>
             </Link>
             <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <User className="w-5 h-5" />
-              <span>About</span>
+              <span>Tentang Kami</span>
             </Link>
           </nav>
         </div>
 
         <div className="space-y-4">
           <hr className="border-gray-100" />
-          <p className="text-xs font-semibold text-gray-400 px-4 uppercase tracking-wider">Other</p>
+          <p className="text-xs font-semibold text-gray-400 px-4 uppercase tracking-wider">Lainnya</p>
           <nav className="space-y-1">
             {user && (
               <>
                 <Link href="/my-bookings" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
                   <Calendar className="w-5 h-5" />
-                  <span>My Bookings</span>
+                  <span>Pesanan Saya</span>
                 </Link>
                 <Link href="/restaurant/order" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200">
                   <Utensils className="w-5 h-5" />
-                  <span>Room Service</span>
+                  <span>Layanan Kamar</span>
                 </Link>
               </>
             )}
@@ -367,25 +400,25 @@ export default function RoomDetailPage() {
                       <div className="px-4 py-2 border-b border-gray-100">
                         <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
                       </div>
-                      <Link href="/my-bookings" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition" onClick={() => setAvatarDropdownOpen(false)}>
-                        <Calendar className="w-4 h-4" /> My Bookings
+                       <Link href="/my-bookings" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition" onClick={() => setAvatarDropdownOpen(false)}>
+                        <Calendar className="w-4 h-4" /> Pesanan Saya
                       </Link>
                       <Link href="/restaurant/order" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition" onClick={() => setAvatarDropdownOpen(false)}>
-                        <Utensils className="w-4 h-4" /> Room Service
+                        <Utensils className="w-4 h-4" /> Layanan Kamar
                       </Link>
                       <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition" onClick={() => setAvatarDropdownOpen(false)}>
-                        <User className="w-4 h-4" /> Profile
+                        <User className="w-4 h-4" /> Profil Saya
                       </Link>
                       <hr className="my-1 border-gray-100" />
                       <button onClick={handleLogout} className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
-                        <LogOut className="w-4 h-4" /> Logout
+                        <LogOut className="w-4 h-4" /> Keluar
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
                 <Link href="/login" className="px-4 py-2 text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition shadow-sm shadow-rose-200">
-                  Log In
+                  Masuk
                 </Link>
               )}
             </div>
@@ -450,33 +483,41 @@ export default function RoomDetailPage() {
               {/* Title & Location */}
               <div className="space-y-3">
                 <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-                  {room.room_types.name} — Room {room.room_number}
+                  {room.room_types?.name} — Kamar {room.room_number}
                 </h1>
                 <div className="flex items-center gap-2 text-sm text-gray-400 font-medium">
                   <MapPin className="w-4 h-4 text-rose-500" />
-                  <span>Floor {room.floor}, ZZZ Hotel, Jl. Sudirman No. 123, Jakarta Pusat</span>
+                  <span>Lantai {room.floor} · ZZZ Hotel Nusantara</span>
                 </div>
               </div>
 
-              {/* Badges */}
+              {/* Badges — from view_type and room_size */}
               <div className="flex flex-wrap gap-2">
-                <span className="px-3.5 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-semibold text-gray-600">Minimalist</span>
-                <span className="px-3.5 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-semibold text-gray-600">Luxury Interior</span>
-                <span className="px-3.5 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-semibold text-gray-600">City View</span>
-                <span className="px-3.5 py-1.5 bg-rose-50 border border-rose-100 rounded-full text-xs font-semibold text-rose-600">Best Seller</span>
+                {room.room_types?.view_type && (
+                  <span className="px-3.5 py-1.5 bg-blue-50 border border-blue-100 rounded-full text-xs font-semibold text-blue-600">
+                    {room.room_types.view_type}
+                  </span>
+                )}
+                {room.room_types?.room_size && (
+                  <span className="px-3.5 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-semibold text-gray-600">
+                    {room.room_types.room_size}
+                  </span>
+                )}
+                <span className="px-3.5 py-1.5 bg-rose-50 border border-rose-100 rounded-full text-xs font-semibold text-rose-600">Lantai {room.floor}</span>
+                <span className="px-3.5 py-1.5 bg-amber-50 border border-amber-100 rounded-full text-xs font-semibold text-amber-700">Best Seller</span>
               </div>
 
-              {/* Features Grid */}
+              {/* Room Specs */}
               <div className="space-y-4">
-                <h3 className="text-lg font-bold text-gray-900">Hotel Features</h3>
+                <h3 className="text-lg font-bold text-gray-900">Spesifikasi Kamar</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {[
-                    { icon: Wifi, label: 'Free WiFi' },
-                    { icon: Bed, label: `${roomFeatures.beds} Queen Bed${roomFeatures.beds > 1 ? 's' : ''}` },
-                    { icon: Bath, label: 'Private Tub' },
-                    { icon: Coffee, label: 'Breakfast' },
+                    { icon: Wifi, label: 'WiFi Gratis' },
+                    { icon: Bed, label: bedCount },
+                    { icon: Bath, label: 'Kamar Mandi Pribadi' },
+                    { icon: Coffee, label: 'Sarapan Tersedia' },
                     { icon: Tv, label: 'Smart TV' },
-                    { icon: Users, label: `Max ${room.room_types.max_occupancy} guests` },
+                    { icon: Users, label: `Maks. ${maxOcc} Tamu` },
                   ].map((feat, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-gray-50/50 border border-gray-100 rounded-xl">
                       <feat.icon className="w-5 h-5 text-rose-500" />
@@ -486,6 +527,33 @@ export default function RoomDetailPage() {
                 </div>
               </div>
 
+              {/* Facilities from DB */}
+              {roomFacilities.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-bold text-gray-900">Fasilitas</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {roomFacilities.map((f: string, i: number) => (
+                      <div key={i} className="flex items-center gap-2 p-2.5 bg-green-50/50 border border-green-100 rounded-xl">
+                        <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                        <span className="text-xs font-semibold text-gray-700">{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Amenities from DB */}
+              {roomAmenities.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-bold text-gray-900">Amenitas</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {roomAmenities.map((a: string, i: number) => (
+                      <span key={i} className="px-3 py-1.5 bg-rose-50 border border-rose-100 rounded-full text-xs font-semibold text-rose-600">{a}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Description Tabs */}
               <div className="space-y-4">
                 <div className="flex border-b border-gray-100 pb-2 gap-6">
@@ -493,40 +561,46 @@ export default function RoomDetailPage() {
                     <button 
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`text-sm font-bold pb-2 transition-all capitalize ${
-                        activeTab === tab ? 'text-rose-500 border-b-2 border-rose-500' : 'text-gray-400 hover:text-gray-700'
-                      }`}
+                      className="text-sm font-bold pb-2 transition-all capitalize"
                     >
-                      {tab} {tab === 'reviews' ? '(120)' : ''}
+                      {tab === 'description' ? 'Deskripsi' : tab === 'features' ? 'Fasilitas' : 'Ulasan (120)'}
                     </button>
                   ))}
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="font-bold text-gray-900 text-sm">Our House</h4>
+                  <h4 className="font-bold text-gray-900 text-sm">Tentang Kamar Ini</h4>
                   {activeTab === 'description' && (
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      {room.room_types.description || 'Experience ultimate luxury in our meticulously designed rooms. This room incorporates standard conveniences, beautiful modern furnishings, and a spacious bed layout.'}
+                      {room.description || room.room_types?.description || 'Nikmati kemewahan dan kenyamanan tertinggi di kamar kami yang dirancang dengan teliti. Kamar ini menggabungkan kenyamanan modern, furnitur indah bernuansa nusantara, dan tata letak yang luas untuk pengalaman menginap terbaik Anda.'}
                     </p>
                   )}
                   {activeTab === 'features' && (
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      This room is equipped with top-tier standard amenities. Included is high-speed Wi-Fi, air conditioning, safe lockers, iron facilities, double bathrooms with rain showers, premium toiletries, minibar snacks, and daily laundry services.
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-xs text-gray-500 leading-relaxed">
+                        Kamar ini dilengkapi dengan amenitas standar terbaik termasuk Wi-Fi berkecepatan tinggi, AC, brankas, setrika, kamar mandi dengan rain shower, toiletries premium, minibar, dan layanan laundry harian.
+                      </p>
+                      {roomFacilities.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {roomFacilities.map((f: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[11px] text-gray-600 font-medium">{f}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                   {activeTab === 'reviews' && (
                     <div className="p-3 bg-gray-50 rounded-xl space-y-1">
                       <div className="flex justify-between items-center">
-                        <span className="font-semibold text-gray-800">John Doe</span>
-                        <span className="text-[10px] text-gray-400">July 2026</span>
+                        <span className="font-semibold text-gray-800">Budi Santoso</span>
+                        <span className="text-[10px] text-gray-400">Juli 2026</span>
                       </div>
-                      <p className="text-xs text-gray-500">Amazing experience! The room was very clean, staff was super friendly.</p>
+                      <p className="text-xs text-gray-500">Pengalaman yang luar biasa! Kamar sangat bersih, staf sangat ramah dan profesional.</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-
             {/* RIGHT COLUMN - Booking Widget */}
             <aside className="sticky top-20 bg-white border border-gray-100 p-6 rounded-2xl shadow-md shadow-gray-50 space-y-6">
               
@@ -534,9 +608,9 @@ export default function RoomDetailPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-3xl font-black text-rose-500">Rp {room.room_types.base_price.toLocaleString()}</span>
-                  <span className="text-xs text-gray-400 font-normal"> / Night</span>
+                  <span className="text-xs text-gray-400 font-normal"> / Malam</span>
                 </div>
-                <span className="px-2.5 py-1 bg-rose-500/10 text-rose-600 text-xs font-bold rounded-lg border border-rose-100">10% Off</span>
+                <span className="px-2.5 py-1 bg-rose-500/10 text-rose-600 text-xs font-bold rounded-lg border border-rose-100">Diskon Member</span>
               </div>
 
               <hr className="border-gray-50" />
@@ -557,11 +631,11 @@ export default function RoomDetailPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Guests</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Jumlah Tamu</label>
                     <select value={guests} onChange={(e) => setGuests(parseInt(e.target.value))}
                       className="w-full px-3 py-2 border border-gray-100 rounded-xl text-xs font-semibold text-gray-800 focus:border-rose-500 focus:ring-0 bg-gray-50/50 cursor-pointer">
                       {[1,2,3,4,5,6].map(num => (
-                        <option key={num} value={num}>{num} Guest{num > 1 ? 's' : ''}</option>
+                        <option key={num} value={num}>{num} Tamu</option>
                       ))}
                     </select>
                   </div>
@@ -569,64 +643,64 @@ export default function RoomDetailPage() {
 
                 {/* Extra Services */}
                 <div className="space-y-2 pt-2">
-                  <h4 className="text-xs font-bold text-gray-900">Extra Services</h4>
+                  <h4 className="text-xs font-bold text-gray-900">Layanan Ekstra</h4>
                   <label className="flex items-center justify-between p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50">
                     <div className="flex items-center gap-2">
                       <input type="checkbox" checked={extraServices.roomClean} onChange={(e) => setExtraServices({...extraServices, roomClean: e.target.checked})}
                         className="w-4 h-4 text-rose-500 border-gray-300 rounded focus:ring-0" />
-                      <span className="text-[11px] font-semibold text-gray-700">Room Clean</span>
+                      <span className="text-[11px] font-semibold text-gray-700">Pembersihan Kamar</span>
                     </div>
-                    <span className="text-[10px] font-bold text-rose-500">+Rp 150.000/night</span>
+                    <span className="text-[10px] font-bold text-rose-500">+Rp 150.000/malam</span>
                   </label>
                   <label className="flex items-center justify-between p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50">
                     <div className="flex items-center gap-2">
                       <input type="checkbox" checked={extraServices.breakfast} onChange={(e) => setExtraServices({...extraServices, breakfast: e.target.checked})}
                         className="w-4 h-4 text-rose-500 border-gray-300 rounded focus:ring-0" />
-                      <span className="text-[11px] font-semibold text-gray-700">Breakfast Buffet</span>
+                      <span className="text-[11px] font-semibold text-gray-700">Prasmanan Sarapan</span>
                     </div>
-                    <span className="text-[10px] font-bold text-rose-500">+Rp 100.000/guest</span>
+                    <span className="text-[10px] font-bold text-rose-500">+Rp 100.000/tamu</span>
                   </label>
                 </div>
 
                 {/* Price Breakdown */}
                 <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-2.5 text-xs">
                   <div className="flex justify-between text-gray-500">
-                    <span>{nights} Night{nights > 1 ? 's' : ''} Price</span>
+                    <span>Biaya Menginap ({nights} Malam)</span>
                     <span className="font-semibold text-gray-700">Rp {(basePricePerNight * nights).toLocaleString()}</span>
                   </div>
                   {extraServices.roomClean && (
                     <div className="flex justify-between text-gray-500">
-                      <span>Room Cleaning Service</span>
+                      <span>Layanan Pembersihan Kamar</span>
                       <span className="font-semibold text-gray-700">Rp {cleanPrice.toLocaleString()}</span>
                     </div>
                   )}
                   {extraServices.breakfast && (
                     <div className="flex justify-between text-gray-500">
-                      <span>Breakfast Service ({guests} guests)</span>
+                      <span>Layanan Sarapan ({guests} tamu)</span>
                       <span className="font-semibold text-gray-700">Rp {breakfastPrice.toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-gray-500">
-                    <span>Service Fee</span>
+                    <span>Biaya Layanan</span>
                     <span className="font-semibold text-gray-700">Rp {serviceFee.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-rose-600 font-semibold bg-rose-500/5 px-2 py-1 rounded">
-                    <span>10% Member Discount</span>
+                    <span>Diskon Member 10%</span>
                     <span>-Rp {discount.toLocaleString()}</span>
                   </div>
                   <hr className="border-gray-200" />
                   <div className="flex justify-between text-sm font-bold text-gray-900">
-                    <span>Total Cost</span>
+                    <span>Total Biaya</span>
                     <span className="text-rose-500">Rp {totalCost.toLocaleString()}</span>
                   </div>
                 </div>
 
                 {/* SIMPLIFIED PAYMENT - just name & email for Midtrans */}
                 <div className="space-y-3 pt-2">
-                  <h4 className="text-xs font-bold text-gray-900">Contact Information</h4>
+                  <h4 className="text-xs font-bold text-gray-900">Informasi Kontak</h4>
                   <input 
                     type="text"
-                    placeholder="Full Name"
+                    placeholder="Nama Lengkap"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-100 rounded-xl text-xs font-semibold text-gray-700 placeholder-gray-400 focus:border-rose-500 focus:ring-0 bg-gray-50/50"
@@ -634,13 +708,13 @@ export default function RoomDetailPage() {
                   />
                   <input 
                     type="email"
-                    placeholder="Email Address"
+                    placeholder="Alamat Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-100 rounded-xl text-xs font-semibold text-gray-700 placeholder-gray-400 focus:border-rose-500 focus:ring-0 bg-gray-50/50"
                     required
                   />
-                  <p className="text-[10px] text-gray-400">Payment will be processed securely via Midtrans.</p>
+                  <p className="text-[10px] text-gray-400">Pembayaran akan diproses dengan aman melalui Midtrans.</p>
                 </div>
 
                 <button 
@@ -648,13 +722,13 @@ export default function RoomDetailPage() {
                   disabled={bookingLoading}
                   className="w-full py-3.5 bg-rose-500 hover:bg-rose-600 disabled:bg-rose-400 text-white font-bold rounded-2xl transition shadow-lg shadow-rose-200 text-sm flex items-center justify-center gap-2"
                 >
-                  {bookingLoading ? 'Processing...' : 'Book & Pay Now'}
+                  {bookingLoading ? 'Memproses...' : 'Pesan & Bayar Sekarang'}
                 </button>
               </form>
 
               <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400 font-semibold">
                 <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span>Secure Checkout via Midtrans</span>
+                <span>Pembayaran Aman via Midtrans</span>
               </div>
             </aside>
           </div>

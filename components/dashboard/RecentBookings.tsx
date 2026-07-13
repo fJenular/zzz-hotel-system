@@ -30,10 +30,10 @@ export default async function RecentBookings() {
     return (
       <Card className="border border-red-100 rounded-3xl">
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-red-700">Recent Bookings</CardTitle>
+          <CardTitle className="text-sm font-semibold text-red-700">Pemesanan Terbaru</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-red-500">Failed to load recent bookings from the database.</p>
+          <p className="text-xs text-red-500">Gagal memuat pemesanan terbaru dari database.</p>
         </CardContent>
       </Card>
     )
@@ -59,8 +59,8 @@ export default async function RecentBookings() {
   return (
     <Card className="border border-slate-100 bg-white shadow-sm hover:shadow-md transition-all duration-300 rounded-3xl p-2">
       <CardHeader className="pb-4 border-b border-slate-50/50">
-        <CardTitle className="text-base font-black text-slate-800 tracking-tight">Recent Bookings</CardTitle>
-        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Real-time database records</p>
+        <CardTitle className="text-base font-black text-slate-800 tracking-tight">Pemesanan Terbaru</CardTitle>
+        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Catatan database real-time</p>
       </CardHeader>
       <CardContent className="pt-4">
         {bookings && bookings.length > 0 ? (
@@ -68,11 +68,11 @@ export default async function RecentBookings() {
             <table className="w-full text-xs text-left text-slate-500">
               <thead>
                 <tr className="border-b border-slate-100/80">
-                  <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider">Guest</th>
-                  <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider">Room</th>
-                  <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider">Schedule</th>
+                  <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider">Tamu</th>
+                  <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider">Kamar</th>
+                  <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider">Jadwal</th>
                   <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                  <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider text-right">Amount</th>
+                  <th className="pb-3 px-2 font-bold text-slate-400 uppercase tracking-wider text-right">Jumlah</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -84,7 +84,7 @@ export default async function RecentBookings() {
                           <User className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="font-bold text-slate-800">{booking.users?.full_name || 'Guest'}</div>
+                          <div className="font-bold text-slate-800">{booking.users?.full_name || 'Tamu'}</div>
                           <div className="text-[10px] text-slate-400">{booking.users?.email}</div>
                         </div>
                       </div>
@@ -94,7 +94,7 @@ export default async function RecentBookings() {
                     </td>
                     <td className="py-3.5 px-2 text-[10px] font-semibold text-slate-500">
                       <div>{new Date(booking.check_in).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
-                      <div className="text-slate-400 font-medium">to {new Date(booking.check_out).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                      <div className="text-slate-400 font-medium">hingga {new Date(booking.check_out).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                     </td>
                     <td className="py-3.5 px-2">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${getStatusStyle(booking.status)}`}>
@@ -111,7 +111,7 @@ export default async function RecentBookings() {
           </div>
         ) : (
           <div className="text-center py-8 text-slate-450 font-medium">
-            No recent bookings found.
+            Tidak ada pemesanan terbaru yang ditemukan.
           </div>
         )}
       </CardContent>

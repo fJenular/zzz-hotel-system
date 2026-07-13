@@ -24,7 +24,6 @@ export default function ManagerReportsPage() {
   const [diningRevenue, setDiningRevenue] = useState(0)
   const [payments, setPayments] = useState<any[]>([])
 
-  // Filters
   const [dateRange, setDateRange] = useState<'all' | 'today' | 'week' | 'month' | 'year'>('all')
   const [reportType, setReportType] = useState<'all' | 'bookings' | 'dining' | 'payments'>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -138,79 +137,72 @@ export default function ManagerReportsPage() {
     try {
       const wb = XLSX.utils.book_new()
 
-      // 1. Bookings Sheet
       if (reportType === 'all' || reportType === 'bookings') {
         const bookingRows = bookings.map((b: any) => ({
-          'Guest Name': b.users?.full_name || 'Guest',
+          'Nama Tamu': b.users?.full_name || 'Tamu',
           'Email': b.users?.email || '-',
-          'Phone': b.users?.phone || '-',
-          'Room Number': b.rooms?.room_number || 'N/A',
-          'Room Type': b.room_types?.name || '-',
+          'Telepon': b.users?.phone || '-',
+          'No. Kamar': b.rooms?.room_number || 'N/A',
+          'Tipe Kamar': b.room_types?.name || '-',
           'Check In': new Date(b.check_in).toLocaleDateString(),
           'Check Out': new Date(b.check_out).toLocaleDateString(),
-          'Guests': b.guests_count,
-          'Total Price': b.total_price,
+          'Tamu': b.guests_count,
+          'Total Harga': b.total_price,
           'Status': b.status,
-          'Payment Status': b.payment_status,
-          'Booking Date': new Date(b.created_at).toLocaleDateString(),
+          'Status Pembayaran': b.payment_status,
+          'Tanggal Pemesanan': new Date(b.created_at).toLocaleDateString(),
         }))
         const ws = XLSX.utils.json_to_sheet(bookingRows)
-        XLSX.utils.book_append_sheet(wb, ws, 'Bookings')
+        XLSX.utils.book_append_sheet(wb, ws, 'Pemesanan')
       }
 
-      // 2. Dining Orders Sheet
       if (reportType === 'all' || reportType === 'dining') {
         const orderRows = orders.map((o: any) => ({
-          'Order Date': new Date(o.created_at).toLocaleDateString(),
-          'Order Time': new Date(o.created_at).toLocaleTimeString(),
-          'Room Number': o.rooms?.room_number || 'Walk-in',
-          'Items': o.restaurant_order_details?.map((d: any) => `${d.quantity}x ${d.restaurant_menus?.name}`).join(', ') || '-',
-          'Total Amount': o.total_price,
+          'Tanggal Pesanan': new Date(o.created_at).toLocaleDateString(),
+          'Waktu Pesanan': new Date(o.created_at).toLocaleTimeString(),
+          'No. Kamar': o.rooms?.room_number || 'Walk-in',
+          'Item': o.restaurant_order_details?.map((d: any) => `${d.quantity}x ${d.restaurant_menus?.name}`).join(', ') || '-',
+          'Total': o.total_price,
           'Status': o.status,
-          'Notes': o.notes || '-'
+          'Catatan': o.notes || '-'
         }))
         const ws = XLSX.utils.json_to_sheet(orderRows)
-        XLSX.utils.book_append_sheet(wb, ws, 'Dining Orders')
+        XLSX.utils.book_append_sheet(wb, ws, 'Pesanan Makan')
       }
 
-      // 3. Payments Sheet
       if (reportType === 'all' || reportType === 'payments') {
         const paymentRows = payments.map((p: any) => ({
-          'Transaction Date': new Date(p.created_at).toLocaleDateString(),
-          'Guest Name': p.bookings?.users?.full_name || 'Guest',
-          'Room Number': p.bookings?.rooms?.room_number || 'N/A',
-          'Amount': p.amount,
-          'Payment Method': p.payment_method,
+          'Tanggal Transaksi': new Date(p.created_at).toLocaleDateString(),
+          'Nama Tamu': p.bookings?.users?.full_name || 'Tamu',
+          'No. Kamar': p.bookings?.rooms?.room_number || 'N/A',
+          'Jumlah': p.amount,
+          'Metode Pembayaran': p.payment_method,
           'Status': p.status,
-          'Order ID': p.midtrans_order_id || 'LOCAL'
+          'ID Order': p.midtrans_order_id || 'LOKAL'
         }))
         const ws = XLSX.utils.json_to_sheet(paymentRows)
-        XLSX.utils.book_append_sheet(wb, ws, 'Payments')
+        XLSX.utils.book_append_sheet(wb, ws, 'Pembayaran')
       }
 
-      // 4. Summary Sheet
       const summaryRows = [
-        { 'Metric': 'Total Bookings', 'Value': bookings.length },
-        { 'Metric': 'Total Dining Orders', 'Value': orders.length },
-        { 'Metric': 'Total Payments', 'Value': payments.length },
-        { 'Metric': 'Room Revenue', 'Value': `Rp ${roomRevenue.toLocaleString()}` },
-        { 'Metric': 'Dining Revenue', 'Value': `Rp ${diningRevenue.toLocaleString()}` },
-        { 'Metric': 'Total Revenue', 'Value': `Rp ${(roomRevenue + diningRevenue).toLocaleString()}` },
-        { 'Metric': 'Report Date Range', 'Value': dateRange.toUpperCase() },
-        { 'Metric': 'Generated On', 'Value': new Date().toLocaleString() },
+        { 'Metrik': 'Total Pemesanan', 'Nilai': bookings.length },
+        { 'Metrik': 'Total Pesanan Makan', 'Nilai': orders.length },
+        { 'Metrik': 'Total Pembayaran', 'Nilai': payments.length },
+        { 'Metrik': 'Pendapatan Kamar', 'Nilai': `Rp ${roomRevenue.toLocaleString()}` },
+        { 'Metrik': 'Pendapatan Makan', 'Nilai': `Rp ${diningRevenue.toLocaleString()}` },
+        { 'Metrik': 'Total Pendapatan', 'Nilai': `Rp ${(roomRevenue + diningRevenue).toLocaleString()}` },
+        { 'Metrik': 'Rentang Tanggal Laporan', 'Nilai': dateRange.toUpperCase() },
+        { 'Metrik': 'Dibuat Pada', 'Nilai': new Date().toLocaleString() },
       ]
       const wsSummary = XLSX.utils.json_to_sheet(summaryRows)
-      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary')
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Ringkasan')
 
-      // Generate file name
-      const fileName = `ZZZ-Hotel-Report_${dateRange}_${new Date().toISOString().split('T')[0]}.xlsx`
-      
-      // Write and download
+      const fileName = `ZZZ-Hotel-Laporan_${dateRange}_${new Date().toISOString().split('T')[0]}.xlsx`
       XLSX.writeFile(wb, fileName)
       
-      alert(`Report exported successfully as "${fileName}"`)
+      alert(`Laporan berhasil diekspor sebagai "${fileName}"`)
     } catch (err: any) {
-      alert('Failed to export report: ' + (err.message || 'Unknown error'))
+      alert('Gagal mengekspor laporan: ' + (err.message || 'Terjadi kesalahan'))
     }
     setExporting(false)
   }
@@ -235,11 +227,11 @@ export default function ManagerReportsPage() {
   )
 
   const dateRangeLabels: Record<string, string> = {
-    all: 'All Time',
-    today: 'Today',
-    week: 'Last 7 Days',
-    month: 'This Month',
-    year: 'This Year'
+    all: 'Semua Waktu',
+    today: 'Hari Ini',
+    week: '7 Hari Terakhir',
+    month: 'Bulan Ini',
+    year: 'Tahun Ini'
   }
 
   return (
@@ -253,18 +245,18 @@ export default function ManagerReportsPage() {
             </div>
             <div>
               <span className="text-xl font-black text-white tracking-tight block leading-tight">zzz-hotel</span>
-              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest block mt-0.5">Reports</span>
+              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest block mt-0.5">Laporan</span>
             </div>
           </Link>
 
           <nav className="space-y-1">
             <Link href="/manager/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-xl transition-all duration-200">
               <LayoutDashboard className="w-5 h-5" />
-              <span>Operations Report</span>
+              <span>Laporan Operasi</span>
             </Link>
             <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
               <FileText className="w-5 h-5" />
-              <span>Revenue Analytics & Export</span>
+              <span>Analitik & Ekspor</span>
             </div>
           </nav>
         </div>
@@ -275,7 +267,7 @@ export default function ManagerReportsPage() {
               {user?.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'MN'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-200 truncate leading-none">{user?.full_name || 'Manager'}</p>
+              <p className="text-xs font-bold text-slate-200 truncate leading-none">{user?.full_name || 'Manajer'}</p>
               <p className="text-[10px] text-slate-500 font-semibold capitalize mt-1 leading-none">{user?.role?.replace('_', ' ')}</p>
             </div>
           </div>
@@ -285,12 +277,12 @@ export default function ManagerReportsPage() {
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-indigo-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200"
           >
             <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
+            <span>Keluar</span>
           </button>
           
           <p className="text-[9px] text-slate-600 font-medium text-center leading-relaxed">
-            ZZZ Hotel Reports Module<br />
-            © 2026 All Rights Reserved
+            Modul Laporan ZZZ Hotel<br />
+            © 2026 Hak Cipta Dilindungi
           </p>
         </div>
       </aside>
@@ -300,9 +292,9 @@ export default function ManagerReportsPage() {
         <header className="bg-white border-b border-slate-100 px-8 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
             <div>
-              <h1 className="text-lg font-black text-slate-900 tracking-tight">Revenue & Analytics</h1>
+              <h1 className="text-lg font-black text-slate-900 tracking-tight">Pendapatan & Analitik</h1>
               <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
-                {dateRangeLabels[dateRange]} · {bookings.length} bookings, {orders.length} orders, {payments.length} payments
+                {dateRangeLabels[dateRange]} · {bookings.length} pemesanan, {orders.length} pesanan, {payments.length} pembayaran
               </p>
             </div>
           </div>
@@ -311,14 +303,14 @@ export default function ManagerReportsPage() {
             <button 
               onClick={() => setShowFilters(!showFilters)}
               className={`p-2 text-slate-400 hover:text-indigo-500 hover:bg-slate-50 rounded-xl border border-slate-100 transition ${showFilters ? 'bg-indigo-50 text-indigo-500 border-indigo-100' : ''}`}
-              title="Toggle Filters"
+              title="Tampilkan/Sembunyikan Filter"
             >
               <Filter className="w-5 h-5" />
             </button>
             <button 
               onClick={fetchReports}
               className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-slate-50 rounded-xl border border-slate-100 transition"
-              title="Refresh Data"
+              title="Perbarui Data"
             >
               <RefreshCw className="w-5 h-5" />
             </button>
@@ -328,7 +320,7 @@ export default function ManagerReportsPage() {
               className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-xl font-bold text-xs shadow-sm hover:shadow-md transition-all duration-200"
             >
               <Download className="w-4 h-4" />
-              <span>{exporting ? 'Exporting...' : 'Export Excel'}</span>
+              <span>{exporting ? 'Mengekspor...' : 'Ekspor Excel'}</span>
             </button>
           </div>
         </header>
@@ -340,7 +332,7 @@ export default function ManagerReportsPage() {
               {/* Date Range Filter */}
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-400" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Period:</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Periode:</span>
                 <div className="flex gap-1.5">
                   {(['all', 'today', 'week', 'month', 'year'] as const).map((range) => (
                     <button
@@ -361,13 +353,13 @@ export default function ManagerReportsPage() {
               {/* Report Type Filter */}
               <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
                 <FileText className="w-4 h-4 text-slate-400" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Report:</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Laporan:</span>
                 <div className="flex gap-1.5">
                   {([
-                    { id: 'all' as const, label: 'All Data' },
-                    { id: 'bookings' as const, label: 'Bookings' },
-                    { id: 'dining' as const, label: 'Dining' },
-                    { id: 'payments' as const, label: 'Payments' },
+                    { id: 'all' as const, label: 'Semua Data' },
+                    { id: 'bookings' as const, label: 'Pemesanan' },
+                    { id: 'dining' as const, label: 'Makan' },
+                    { id: 'payments' as const, label: 'Pembayaran' },
                   ]).map((type) => (
                     <button
                       key={type.id}
@@ -389,7 +381,7 @@ export default function ManagerReportsPage() {
 
         <main className="flex-1 p-8 space-y-8 overflow-y-auto">
           {loading ? (
-            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Loading reports...</div>
+            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Memuat laporan...</div>
           ) : (
             <>
               {/* KPI SUMMARY ROW */}
@@ -399,7 +391,7 @@ export default function ManagerReportsPage() {
                     <Hotel className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Bookings</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pemesanan</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{bookings.length}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">{dateRangeLabels[dateRange]}</p>
                   </div>
@@ -410,7 +402,7 @@ export default function ManagerReportsPage() {
                     <DollarSign className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Room Revenue</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pendapatan Kamar</p>
                     <p className="text-lg font-black text-slate-800 mt-0.5">Rp {roomRevenue.toLocaleString()}</p>
                   </div>
                 </div>
@@ -420,7 +412,7 @@ export default function ManagerReportsPage() {
                     <TrendingUp className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dining Orders</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pesanan Makan</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{orders.length}</p>
                   </div>
                 </div>
@@ -430,7 +422,7 @@ export default function ManagerReportsPage() {
                     <TrendingUp className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Revenue</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Pendapatan</p>
                     <p className="text-lg font-black text-slate-800 mt-0.5">Rp {(roomRevenue + diningRevenue).toLocaleString()}</p>
                   </div>
                 </div>
@@ -442,7 +434,7 @@ export default function ManagerReportsPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input 
                     type="text"
-                    placeholder="Search across all reports..."
+                    placeholder="Cari di semua laporan..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 pr-4 py-2.5 w-full border border-slate-100 bg-white rounded-2xl text-sm focus:outline-none focus:border-indigo-300 transition-colors"
@@ -450,12 +442,12 @@ export default function ManagerReportsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-slate-400 font-medium">
-                    <span className="font-bold text-slate-600">{bookings.length + orders.length + payments.length}</span> total records
+                    <span className="font-bold text-slate-600">{bookings.length + orders.length + payments.length}</span> total data
                   </span>
                 </div>
               </div>
 
-              {/* REPORTS GRID */}
+              {/* BOOKINGS TABLE */}
               {(reportType === 'all' || reportType === 'bookings') && (
                 <div className="bg-white border border-slate-100 rounded-[28px] shadow-sm animate-slide-up overflow-hidden">
                   <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between">
@@ -464,59 +456,59 @@ export default function ManagerReportsPage() {
                         <Hotel className="w-5 h-5 text-indigo-600" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-black text-slate-800">Stays Bookings Ledger</h3>
-                        <p className="text-[10px] text-slate-400 font-semibold">{filteredBookings.length} booking records</p>
+                        <h3 className="text-sm font-black text-slate-800">Buku Besar Pemesanan</h3>
+                        <p className="text-[10px] text-slate-400 font-semibold">{filteredBookings.length} catatan pemesanan</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => {
                         const rows = bookings.map((b: any) => ({
-                          'Guest Name': b.users?.full_name || 'Guest',
+                          'Nama Tamu': b.users?.full_name || 'Tamu',
                           'Email': b.users?.email || '-',
-                          'Room': b.rooms?.room_number || 'N/A',
+                          'Kamar': b.rooms?.room_number || 'N/A',
                           'Check In': new Date(b.check_in).toLocaleDateString(),
                           'Check Out': new Date(b.check_out).toLocaleDateString(),
                           'Total': b.total_price,
                           'Status': b.status,
-                          'Payment': b.payment_status
+                          'Pembayaran': b.payment_status
                         }))
                         const ws = XLSX.utils.json_to_sheet(rows)
                         const wb = XLSX.utils.book_new()
-                        XLSX.utils.book_append_sheet(wb, ws, 'Bookings')
-                        XLSX.writeFile(wb, `ZZZ-Bookings_${new Date().toISOString().split('T')[0]}.xlsx`)
+                        XLSX.utils.book_append_sheet(wb, ws, 'Pemesanan')
+                        XLSX.writeFile(wb, `ZZZ-Pemesanan_${new Date().toISOString().split('T')[0]}.xlsx`)
                       }}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition"
                     >
                       <Download className="w-3 h-3" />
-                      Export Table
+                      Ekspor Tabel
                     </button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-xs">
                       <thead className="bg-slate-50/50">
                         <tr>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Guest</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Room</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamu</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kamar</th>
                           <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Check In</th>
                           <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Check Out</th>
-                          <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Price</th>
+                          <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Harga</th>
                           <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {filteredBookings.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">No booking records found for this period.</td>
+                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">Tidak ada catatan pemesanan untuk periode ini.</td>
                           </tr>
                         ) : (
                           filteredBookings.map((b: any) => (
                             <tr key={b.id} className="hover:bg-slate-50/30 transition">
                               <td className="px-6 py-4">
-                                <div className="font-bold text-slate-800">{b.users?.full_name || 'Guest'}</div>
+                                <div className="font-bold text-slate-800">{b.users?.full_name || 'Tamu'}</div>
                                 <div className="text-[10px] text-slate-400">{b.users?.email}</div>
                               </td>
                               <td className="px-6 py-4">
-                                <span className="font-bold text-indigo-600">Room {b.rooms?.room_number || 'N/A'}</span>
+                                <span className="font-bold text-indigo-600">Kamar {b.rooms?.room_number || 'N/A'}</span>
                                 <div className="text-[10px] text-slate-400">{b.room_types?.name}</div>
                               </td>
                               <td className="px-6 py-4 text-slate-600 font-medium">{new Date(b.check_in).toLocaleDateString()}</td>
@@ -550,45 +542,45 @@ export default function ManagerReportsPage() {
                         <TrendingUp className="w-5 h-5 text-amber-600" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-black text-slate-800">Room Service / Dining Ledger</h3>
-                        <p className="text-[10px] text-slate-400 font-semibold">{filteredOrders.length} order records</p>
+                        <h3 className="text-sm font-black text-slate-800">Buku Besar Room Service / Makan</h3>
+                        <p className="text-[10px] text-slate-400 font-semibold">{filteredOrders.length} catatan pesanan</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => {
                         const rows = orders.map((o: any) => ({
-                          'Date': new Date(o.created_at).toLocaleDateString(),
-                          'Room': o.rooms?.room_number || 'Walk-in',
-                          'Items': o.restaurant_order_details?.map((d: any) => `${d.quantity}x ${d.restaurant_menus?.name}`).join(', '),
-                          'Amount': o.total_price,
+                          'Tanggal': new Date(o.created_at).toLocaleDateString(),
+                          'Kamar': o.rooms?.room_number || 'Walk-in',
+                          'Item': o.restaurant_order_details?.map((d: any) => `${d.quantity}x ${d.restaurant_menus?.name}`).join(', '),
+                          'Total': o.total_price,
                           'Status': o.status
                         }))
                         const ws = XLSX.utils.json_to_sheet(rows)
                         const wb = XLSX.utils.book_new()
-                        XLSX.utils.book_append_sheet(wb, ws, 'Dining Orders')
-                        XLSX.writeFile(wb, `ZZZ-Dining_${new Date().toISOString().split('T')[0]}.xlsx`)
+                        XLSX.utils.book_append_sheet(wb, ws, 'Pesanan Makan')
+                        XLSX.writeFile(wb, `ZZZ-PesananMakan_${new Date().toISOString().split('T')[0]}.xlsx`)
                       }}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition"
                     >
                       <Download className="w-3 h-3" />
-                      Export Table
+                      Ekspor Tabel
                     </button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-xs">
                       <thead className="bg-slate-50/50">
                         <tr>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Room</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Items</th>
-                          <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tanggal</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kamar</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Item</th>
+                          <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</th>
                           <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {filteredOrders.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-medium">No dining orders found for this period.</td>
+                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-medium">Tidak ada pesanan makan untuk periode ini.</td>
                           </tr>
                         ) : (
                           filteredOrders.map((o: any) => (
@@ -597,7 +589,7 @@ export default function ManagerReportsPage() {
                                 <div>{new Date(o.created_at).toLocaleDateString()}</div>
                                 <div className="text-[10px] text-slate-400">{new Date(o.created_at).toLocaleTimeString()}</div>
                               </td>
-                              <td className="px-6 py-4 font-bold text-amber-600">Room {o.rooms?.room_number || 'Walk-in'}</td>
+                              <td className="px-6 py-4 font-bold text-amber-600">Kamar {o.rooms?.room_number || 'Walk-in'}</td>
                               <td className="px-6 py-4 max-w-[250px]">
                                 <div className="text-slate-700 font-medium truncate">
                                   {o.restaurant_order_details?.map((d: any) => `${d.quantity}x ${d.restaurant_menus?.name}`).join(', ')}
@@ -631,47 +623,47 @@ export default function ManagerReportsPage() {
                         <DollarSign className="w-5 h-5 text-purple-600" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-black text-slate-800">Payments Transaction Log</h3>
-                        <p className="text-[10px] text-slate-400 font-semibold">{filteredPayments.length} transaction records</p>
+                        <h3 className="text-sm font-black text-slate-800">Log Transaksi Pembayaran</h3>
+                        <p className="text-[10px] text-slate-400 font-semibold">{filteredPayments.length} catatan transaksi</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => {
                         const rows = payments.map((p: any) => ({
-                          'Date': new Date(p.created_at).toLocaleDateString(),
-                          'Guest': p.bookings?.users?.full_name || 'Guest',
-                          'Room': p.bookings?.rooms?.room_number || 'N/A',
-                          'Amount': p.amount,
-                          'Method': p.payment_method,
+                          'Tanggal': new Date(p.created_at).toLocaleDateString(),
+                          'Tamu': p.bookings?.users?.full_name || 'Tamu',
+                          'Kamar': p.bookings?.rooms?.room_number || 'N/A',
+                          'Jumlah': p.amount,
+                          'Metode': p.payment_method,
                           'Status': p.status
                         }))
                         const ws = XLSX.utils.json_to_sheet(rows)
                         const wb = XLSX.utils.book_new()
-                        XLSX.utils.book_append_sheet(wb, ws, 'Payments')
-                        XLSX.writeFile(wb, `ZZZ-Payments_${new Date().toISOString().split('T')[0]}.xlsx`)
+                        XLSX.utils.book_append_sheet(wb, ws, 'Pembayaran')
+                        XLSX.writeFile(wb, `ZZZ-Pembayaran_${new Date().toISOString().split('T')[0]}.xlsx`)
                       }}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition"
                     >
                       <Download className="w-3 h-3" />
-                      Export Table
+                      Ekspor Tabel
                     </button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-xs">
                       <thead className="bg-slate-50/50">
                         <tr>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Transaction ID</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Guest / Room</th>
-                          <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Method</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tanggal</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">ID Transaksi</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamu / Kamar</th>
+                          <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jumlah</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Metode</th>
                           <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {filteredPayments.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">No payment records found for this period.</td>
+                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">Tidak ada catatan pembayaran untuk periode ini.</td>
                           </tr>
                         ) : (
                           filteredPayments.map((p: any) => (
@@ -679,12 +671,12 @@ export default function ManagerReportsPage() {
                               <td className="px-6 py-4 text-slate-500 font-medium">{new Date(p.created_at).toLocaleDateString()}</td>
                               <td className="px-6 py-4">
                                 <span className="font-mono text-[10px] text-slate-500 font-semibold">
-                                  {p.midtrans_order_id?.substring(0, 18) || 'LOCAL'}
+                                  {p.midtrans_order_id?.substring(0, 18) || 'LOKAL'}
                                 </span>
                               </td>
                               <td className="px-6 py-4">
-                                <div className="font-bold text-slate-800">{p.bookings?.users?.full_name || 'Guest'}</div>
-                                <div className="text-[10px] text-indigo-500 font-semibold">Room {p.bookings?.rooms?.room_number || 'N/A'}</div>
+                                <div className="font-bold text-slate-800">{p.bookings?.users?.full_name || 'Tamu'}</div>
+                                <div className="text-[10px] text-indigo-500 font-semibold">Kamar {p.bookings?.rooms?.room_number || 'N/A'}</div>
                               </td>
                               <td className="px-6 py-4 text-right font-bold text-slate-800">Rp {Number(p.amount).toLocaleString()}</td>
                               <td className="px-6 py-4">

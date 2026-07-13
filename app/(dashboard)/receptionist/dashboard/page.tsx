@@ -6,9 +6,10 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { 
   DoorOpen, LogOut, Bell, RefreshCw, CheckCircle, Clock, 
   ArrowRight, Sparkles, User, Search, Calendar, KeyRound, Star,
-  Heart, Mail, MoreHorizontal
+  Heart, Mail, MoreHorizontal, QrCode, X, Check
 } from 'lucide-react'
 import Link from 'next/link'
+import QRCode from 'react-qr-code'
 
 export default function ReceptionistDashboard() {
   const router = useRouter()
@@ -19,6 +20,16 @@ export default function ReceptionistDashboard() {
   const [activeTab, setActiveTab] = useState<'rooms' | 'checkin' | 'checkout'>('rooms')
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // State for Check-in Scan Modal
+  const [showScanModal, setShowScanModal] = useState(false)
+  const [scanInput, setScanInput] = useState('')
+
+  // State for QR Modal
+  const [showCheckoutQR, setShowCheckoutQR] = useState<{isOpen: boolean, booking: any | null}>({
+    isOpen: false,
+    booking: null
+  })
 
   useEffect(() => {
     const checkUser = async () => {
@@ -76,10 +87,10 @@ export default function ReceptionistDashboard() {
         .eq('id', roomId)
       if (roomErr) throw roomErr
 
-      alert('Check-In successful! Room is now marked occupied.')
+      alert('Check-In berhasil! Kamar sekarang ditandai sebagai terisi.')
       fetchData()
     } catch (err: any) {
-      alert(err.message || 'Check-In failed')
+      alert(err.message || 'Check-In gagal')
     }
   }
 
@@ -108,10 +119,11 @@ export default function ReceptionistDashboard() {
         })
       if (taskErr) throw taskErr
 
-      alert('Check-Out successful! Housekeeping task auto-created.')
+      setShowCheckoutQR({ isOpen: false, booking: null })
+      alert('Check-Out berhasil! Tugas housekeeping otomatis dibuat.')
       fetchData()
     } catch (err: any) {
-      alert(err.message || 'Check-Out failed')
+      alert(err.message || 'Check-Out gagal')
     }
   }
 
@@ -122,10 +134,26 @@ export default function ReceptionistDashboard() {
         .update({ status: newStatus })
         .eq('id', roomId)
       if (error) throw error
-      alert(`Room status updated to ${newStatus}`)
+      alert(`Status kamar diperbarui menjadi ${newStatus}`)
       fetchData()
     } catch (err: any) {
-      alert(err.message || 'Failed to update status')
+      alert(err.message || 'Gagal memperbarui status')
+    }
+  }
+
+  const handleScanSubmit = () => {
+    if (scanInput.startsWith('CHECKIN:')) {
+      const bookingId = scanInput.replace('CHECKIN:', '')
+      const booking = bookings.find(b => b.id === bookingId)
+      if (booking && booking.status === 'confirmed') {
+        handleCheckIn(booking.id, booking.room_id)
+        setShowScanModal(false)
+        setScanInput('')
+      } else {
+        alert('Booking tidak ditemukan atau status bukan confirmed.')
+      }
+    } else {
+      alert('Format QR tidak valid.')
     }
   }
 
@@ -144,8 +172,103 @@ export default function ReceptionistDashboard() {
   const checkoutQueue = bookings.filter((b: any) => b.status === 'checked_in')
 
   return (
-    <div className="flex min-h-screen bg-amber-50/30 font-sans text-slate-800 antialiased">
-      {/* ===== SIDEBAR: Warm Hospitality Amber ===== */}
+    <div className="flex min-h-screen bg-amber-50/30 font-sans text-slate-800 antialiased relative">
+      
+      {/* CHECK-IN SCAN MODAL */}
+      {showScanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-[32px] p-6 shadow-2xl relative">
+            <button 
+              onClick={() => {
+                setShowScanModal(false)
+                setScanInput('')
+              }}
+              className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            
+            <div className="text-center mb-6 mt-2">
+              <div className="w-12 h-12 bg-emerald-100 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <QrCode className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-black text-slate-800 tracking-tight">Scan QR Check-In</h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">Simulasi scan QR: Paste alamat/string QR dari tamu untuk mengonfirmasi check-in.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 block">Data QR Code</label>
+                <input 
+                  type="text"
+                  value={scanInput}
+                  onChange={(e) => setScanInput(e.target.value)}
+                  placeholder="Contoh: CHECKIN:uuid..."
+                  className="w-full p-4 border-2 border-emerald-100 bg-emerald-50/20 rounded-2xl text-sm font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  autoFocus
+                />
+              </div>
+
+              <button 
+                onClick={handleScanSubmit}
+                disabled={!scanInput}
+                className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-bold rounded-2xl transition-all shadow-lg shadow-emerald-200 disabled:shadow-none"
+              >
+                <Check className="w-4 h-4" />
+                Proses Check-In
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CHECKOUT QR MODAL */}
+      {showCheckoutQR.isOpen && showCheckoutQR.booking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl relative">
+            <button 
+              onClick={() => setShowCheckoutQR({ isOpen: false, booking: null })}
+              className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            
+            <div className="text-center mb-6 mt-2">
+              <div className="w-12 h-12 bg-amber-100 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <QrCode className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-black text-slate-800 tracking-tight">QR Check-out</h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">Tunjukkan QR ini kepada tamu sebagai bukti akses keluar (gate pass).</p>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex justify-center mb-6">
+              <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                <QRCode 
+                  value={`CHECKOUT:${showCheckoutQR.booking.id}:${Math.random().toString(36).substring(7)}`}
+                  size={160}
+                  level="H"
+                  fgColor="#0f172a"
+                />
+              </div>
+            </div>
+
+            <div className="bg-amber-50/50 p-4 rounded-2xl mb-6">
+              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">Kamar {showCheckoutQR.booking.rooms?.room_number}</p>
+              <p className="text-sm font-bold text-slate-800">{showCheckoutQR.booking.users?.full_name}</p>
+            </div>
+
+            <button 
+              onClick={() => handleCheckOut(showCheckoutQR.booking.id, showCheckoutQR.booking.room_id)}
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-amber-500 text-white text-sm font-bold rounded-2xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-200"
+            >
+              <Check className="w-4 h-4" />
+              Konfirmasi Check-out
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SIDEBAR */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-amber-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           <Link href="/" className="flex items-center gap-3">
@@ -154,7 +277,7 @@ export default function ReceptionistDashboard() {
             </div>
             <div>
               <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">zzz-hotel</span>
-              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mt-0.5">Front Desk</span>
+              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mt-0.5">Resepsionis</span>
             </div>
           </Link>
 
@@ -166,7 +289,7 @@ export default function ReceptionistDashboard() {
               }`}
             >
               <DoorOpen className="w-5 h-5" />
-              <span>Rooms Grid</span>
+              <span>Grid Kamar</span>
             </button>
             <button 
               onClick={() => setActiveTab('checkin')} 
@@ -175,7 +298,7 @@ export default function ReceptionistDashboard() {
               }`}
             >
               <CheckCircle className="w-5 h-5" />
-              <span>Check-In Queue</span>
+              <span>Antrian Check-In</span>
               {checkinQueue.length > 0 && (
                 <span className="ml-auto bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">{checkinQueue.length}</span>
               )}
@@ -187,7 +310,7 @@ export default function ReceptionistDashboard() {
               }`}
             >
               <ArrowRight className="w-5 h-5" />
-              <span>Check-Out Queue</span>
+              <span>Antrian Check-Out</span>
               {checkoutQueue.length > 0 && (
                 <span className="ml-auto bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">{checkoutQueue.length}</span>
               )}
@@ -196,8 +319,8 @@ export default function ReceptionistDashboard() {
 
           <div className="pt-4 space-y-2">
             <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100/50">
-              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Welcome</p>
-              <p className="text-xs font-bold text-slate-800 mt-0.5">{user?.full_name || 'Guest'}</p>
+              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Selamat Datang</p>
+              <p className="text-xs font-bold text-slate-800 mt-0.5">{user?.full_name || 'Tamu'}</p>
               <p className="text-[10px] text-slate-500 capitalize">{user?.role?.replace('_', ' ')}</p>
             </div>
           </div>
@@ -209,23 +332,23 @@ export default function ReceptionistDashboard() {
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all duration-200"
           >
             <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
+            <span>Keluar</span>
           </button>
           <p className="text-[9px] text-slate-400 font-medium text-center leading-relaxed">
-            ZZZ Hotel Front Desk<br />
-            © 2026 All Rights Reserved
+            Resepsionis ZZZ Hotel<br />
+            © 2026 Hak Cipta Dilindungi
           </p>
         </div>
       </aside>
 
-      {/* ===== MAIN CONTENT ===== */}
+      {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* HEADER */}
         <header className="bg-white border-b border-amber-100/50 px-8 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
-            <h1 className="text-lg font-black text-slate-900 tracking-tight">Front Desk Reception</h1>
+            <h1 className="text-lg font-black text-slate-900 tracking-tight">Resepsi Front Desk</h1>
             <span className="px-2.5 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-lg border border-amber-100/50">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              {new Date().toLocaleDateString('id-ID', { weekday: 'long', month: 'short', day: 'numeric' })}
             </span>
           </div>
           
@@ -234,7 +357,7 @@ export default function ReceptionistDashboard() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
                   type="text" 
-                  placeholder="Search rooms..." 
+                  placeholder="Cari kamar..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 pr-4 py-2 w-full border border-amber-100 bg-amber-50/20 rounded-2xl text-xs focus:outline-none focus:border-amber-300 transition-colors"
@@ -242,10 +365,10 @@ export default function ReceptionistDashboard() {
               </div>
 
             <div className="flex items-center gap-3 border-r border-amber-100 pr-5">
-              <button className="p-2 text-slate-400 hover:text-amber-500 transition-colors" aria-label="Favorites">
+              <button className="p-2 text-slate-400 hover:text-amber-500 transition-colors" aria-label="Favorit">
                 <Heart className="w-5 h-5" />
               </button>
-              <button className="p-2 text-slate-400 hover:text-amber-500 transition-colors relative" aria-label="Notifications">
+              <button className="p-2 text-slate-400 hover:text-amber-500 transition-colors relative" aria-label="Notifikasi">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 border border-white rounded-full"></span>
               </button>
@@ -256,8 +379,8 @@ export default function ReceptionistDashboard() {
                 {user?.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'FR'}
               </div>
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-black text-slate-800 leading-none">{user?.full_name || 'Receptionist'}</p>
-                <p className="text-[10px] text-slate-400 font-semibold mt-1 leading-none">Front Desk</p>
+                <p className="text-xs font-black text-slate-800 leading-none">{user?.full_name || 'Resepsionis'}</p>
+                <p className="text-[10px] text-slate-400 font-semibold mt-1 leading-none">Resepsionis</p>
               </div>
             </div>
           </div>
@@ -266,7 +389,7 @@ export default function ReceptionistDashboard() {
         {/* CONTENT */}
         <main className="flex-1 p-8 space-y-6 overflow-y-auto">
           {loading ? (
-            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Loading front desk data...</div>
+            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Memuat data front desk...</div>
           ) : (
             <>
               {/* ROOMS GRID TAB */}
@@ -277,17 +400,17 @@ export default function ReceptionistDashboard() {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input 
                         type="text"
-                        placeholder="Search room number, type, or status..."
+                        placeholder="Cari nomor kamar, tipe, atau status..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9 pr-4 py-2.5 w-full border border-amber-100 bg-white rounded-2xl text-sm focus:outline-none focus:border-amber-300 transition-colors"
                       />
                     </div>
                     <div className="flex gap-2 text-xs font-medium text-slate-500 bg-white p-1.5 rounded-2xl border border-amber-100 shadow-sm">
-                      <span className="px-3 py-1.5 flex items-center gap-1.5 bg-emerald-50 text-emerald-600 rounded-xl"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Available</span>
-                      <span className="px-3 py-1.5 flex items-center gap-1.5 bg-rose-50 text-rose-600 rounded-xl"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Occupied</span>
-                      <span className="px-3 py-1.5 flex items-center gap-1.5 bg-amber-50 text-amber-600 rounded-xl"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Dirty</span>
-                      <span className="px-3 py-1.5 flex items-center gap-1.5 bg-slate-50 text-slate-500 rounded-xl"><span className="w-2 h-2 rounded-full bg-slate-400"></span> Maint</span>
+                      <span className="px-3 py-1.5 flex items-center gap-1.5 bg-emerald-50 text-emerald-600 rounded-xl"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Tersedia</span>
+                      <span className="px-3 py-1.5 flex items-center gap-1.5 bg-rose-50 text-rose-600 rounded-xl"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Ditempati</span>
+                      <span className="px-3 py-1.5 flex items-center gap-1.5 bg-amber-50 text-amber-600 rounded-xl"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Kotor</span>
+                      <span className="px-3 py-1.5 flex items-center gap-1.5 bg-slate-50 text-slate-500 rounded-xl"><span className="w-2 h-2 rounded-full bg-slate-400"></span> Perbaikan</span>
                     </div>
                   </div>
 
@@ -296,22 +419,22 @@ export default function ReceptionistDashboard() {
                       let statusBg = 'bg-white border-emerald-100'
                       let statusHeader = 'bg-emerald-50 text-emerald-700'
                       let statusDot = 'bg-emerald-500'
-                      let statusLabel = 'Available'
+                      let statusLabel = 'Tersedia'
                       if (room.status === 'occupied') {
                         statusBg = 'bg-white border-rose-100'
                         statusHeader = 'bg-rose-50 text-rose-700'
                         statusDot = 'bg-rose-500'
-                        statusLabel = 'Occupied'
+                        statusLabel = 'Ditempati'
                       } else if (room.status === 'dirty') {
                         statusBg = 'bg-white border-amber-100'
                         statusHeader = 'bg-amber-50 text-amber-700'
                         statusDot = 'bg-amber-500'
-                        statusLabel = 'Dirty'
+                        statusLabel = 'Kotor'
                       } else if (room.status === 'maintenance') {
                         statusBg = 'bg-white border-slate-100'
                         statusHeader = 'bg-slate-50 text-slate-700'
                         statusDot = 'bg-slate-500'
-                        statusLabel = 'Maintenance'
+                        statusLabel = 'Perbaikan'
                       }
 
                       return (
@@ -328,16 +451,16 @@ export default function ReceptionistDashboard() {
                               <span className="text-2xl font-black text-slate-800">{room.room_number}</span>
                             </div>
                             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{room.room_types?.name}</p>
-                            <p className="text-[10px] text-slate-400">Floor {room.floor}</p>
+                            <p className="text-[10px] text-slate-400">Lantai {room.floor}</p>
                             <select 
                               value={room.status}
                               onChange={(e) => handleUpdateRoomStatus(room.id, e.target.value)}
                               className="text-[10px] font-bold py-1.5 px-2 bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none w-full cursor-pointer"
                             >
-                              <option value="available">Available</option>
-                              <option value="occupied">Occupied</option>
-                              <option value="dirty">Dirty</option>
-                              <option value="maintenance">Maintenance</option>
+                              <option value="available">Tersedia</option>
+                              <option value="occupied">Ditempati</option>
+                              <option value="dirty">Kotor</option>
+                              <option value="maintenance">Perbaikan</option>
                             </select>
                           </div>
                         </div>
@@ -350,42 +473,51 @@ export default function ReceptionistDashboard() {
               {/* CHECK-IN QUEUE TAB */}
               {activeTab === 'checkin' && (
                 <div className="space-y-4 animate-slide-up">
-                  <h2 className="text-lg font-black text-slate-900">Arriving Guests</h2>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h2 className="text-lg font-black text-slate-900">Tamu yang Akan Tiba</h2>
+                    <button 
+                      onClick={() => setShowScanModal(true)}
+                      className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all active:scale-95"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      + Check-In (Scan QR)
+                    </button>
+                  </div>
                   {checkinQueue.length === 0 ? (
                     <div className="bg-white border border-amber-100 p-16 text-center rounded-[28px]">
                       <CheckCircle className="w-14 h-14 text-emerald-400 mx-auto mb-4" />
-                      <p className="font-bold text-slate-700">All caught up!</p>
-                      <p className="text-xs text-slate-400 mt-1">There are no pending arrivals left to check in today.</p>
+                      <p className="font-bold text-slate-700">Semua beres!</p>
+                      <p className="text-xs text-slate-400 mt-1">Tidak ada tamu yang perlu di-check in hari ini.</p>
                     </div>
                   ) : (
                     <div className="bg-white border border-amber-100 rounded-[28px] overflow-hidden shadow-sm">
                       <table className="min-w-full divide-y divide-amber-50">
                         <thead className="bg-amber-50/50">
                           <tr>
-                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Guest</th>
-                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Room</th>
-                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Dates</th>
-                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Payment</th>
-                            <th className="px-6 py-4 text-right text-[10px] font-bold text-amber-600 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Tamu</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Kamar</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Tanggal</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Pembayaran</th>
+                            <th className="px-6 py-4 text-right text-[10px] font-bold text-amber-600 uppercase tracking-wider">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-amber-50">
                           {checkinQueue.map((booking: any) => (
                             <tr key={booking.id} className="hover:bg-amber-50/30 transition">
                               <td className="px-6 py-4">
-                                <div className="font-bold text-slate-800">{booking.users?.full_name || 'Guest'}</div>
-                                <div className="text-xs text-slate-400">{booking.users?.phone || 'No phone'}</div>
+                                <div className="font-bold text-slate-800">{booking.users?.full_name || 'Tamu'}</div>
+                                <div className="text-xs text-slate-400">{booking.users?.phone || 'Tidak ada telepon'}</div>
                               </td>
                               <td className="px-6 py-4">
-                                <div className="font-semibold text-amber-600">Room {booking.rooms?.room_number}</div>
+                                <div className="font-semibold text-amber-600">Kamar {booking.rooms?.room_number}</div>
                                 <div className="text-[10px] text-slate-400">{booking.room_types?.name}</div>
                               </td>
                               <td className="px-6 py-4">
                                 <div className="text-xs font-medium text-slate-600">
-                                  {new Date(booking.check_in).toLocaleDateString()} 
+                                  {new Date(booking.check_in).toLocaleDateString('id-ID')} 
                                 </div>
                                 <div className="text-[10px] text-slate-400">
-                                  → {new Date(booking.check_out).toLocaleDateString()}
+                                  → {new Date(booking.check_out).toLocaleDateString('id-ID')}
                                 </div>
                               </td>
                               <td className="px-6 py-4">
@@ -398,9 +530,10 @@ export default function ReceptionistDashboard() {
                               <td className="px-6 py-4 text-right">
                                 <button
                                   onClick={() => handleCheckIn(booking.id, booking.room_id)}
-                                  className="px-4 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                                  className="px-4 py-2 flex items-center justify-center gap-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ml-auto"
                                 >
-                                  Check In
+                                  <QrCode className="w-3.5 h-3.5" />
+                                  Scan Check In
                                 </button>
                               </td>
                             </tr>
@@ -415,49 +548,50 @@ export default function ReceptionistDashboard() {
               {/* CHECK-OUT QUEUE TAB */}
               {activeTab === 'checkout' && (
                 <div className="space-y-4 animate-slide-up">
-                  <h2 className="text-lg font-black text-slate-900">Departing Guests</h2>
+                  <h2 className="text-lg font-black text-slate-900">Tamu yang Akan Pergi</h2>
                   {checkoutQueue.length === 0 ? (
                     <div className="bg-white border border-amber-100 p-16 text-center rounded-[28px]">
                       <Clock className="w-14 h-14 text-slate-300 mx-auto mb-4" />
-                      <p className="font-bold text-slate-700">No active stays</p>
-                      <p className="text-xs text-slate-400 mt-1">There are no checked-in guests ready to checkout.</p>
+                      <p className="font-bold text-slate-700">Tidak ada inap aktif</p>
+                      <p className="text-xs text-slate-400 mt-1">Tidak ada tamu yang siap untuk check-out.</p>
                     </div>
                   ) : (
                     <div className="bg-white border border-amber-100 rounded-[28px] overflow-hidden shadow-sm">
                       <table className="min-w-full divide-y divide-amber-50">
                         <thead className="bg-amber-50/50">
                           <tr>
-                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Guest</th>
-                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Room</th>
-                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Stay Period</th>
-                            <th className="px-6 py-4 text-right text-[10px] font-bold text-amber-600 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Tamu</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Kamar</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-bold text-amber-600 uppercase tracking-wider">Periode Inap</th>
+                            <th className="px-6 py-4 text-right text-[10px] font-bold text-amber-600 uppercase tracking-wider">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-amber-50">
                           {checkoutQueue.map((booking: any) => (
                             <tr key={booking.id} className="hover:bg-amber-50/30 transition">
                               <td className="px-6 py-4">
-                                <div className="font-bold text-slate-800">{booking.users?.full_name || 'Guest'}</div>
-                                <div className="text-xs text-slate-400">{booking.users?.phone || 'No phone'}</div>
+                                <div className="font-bold text-slate-800">{booking.users?.full_name || 'Tamu'}</div>
+                                <div className="text-xs text-slate-400">{booking.users?.phone || 'Tidak ada telepon'}</div>
                               </td>
                               <td className="px-6 py-4">
-                                <div className="font-semibold text-amber-600">Room {booking.rooms?.room_number}</div>
+                                <div className="font-semibold text-amber-600">Kamar {booking.rooms?.room_number}</div>
                                 <div className="text-[10px] text-slate-400">{booking.room_types?.name}</div>
                               </td>
                               <td className="px-6 py-4">
                                 <div className="text-xs font-medium text-slate-600">
-                                  {new Date(booking.check_in).toLocaleDateString()} - {new Date(booking.check_out).toLocaleDateString()}
+                                  {new Date(booking.check_in).toLocaleDateString('id-ID')} - {new Date(booking.check_out).toLocaleDateString('id-ID')}
                                 </div>
                                 <div className="text-[10px] text-slate-400">
-                                  Checkout: {new Date(booking.check_out).toLocaleDateString()}
+                                  Check-Out: {new Date(booking.check_out).toLocaleDateString('id-ID')}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 text-right">
+                              <td className="px-6 py-4 flex justify-end">
                                 <button
-                                  onClick={() => handleCheckOut(booking.id, booking.room_id)}
-                                  className="px-4 py-2 text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                                  onClick={() => setShowCheckoutQR({ isOpen: true, booking })}
+                                  className="px-4 py-2 flex items-center justify-center gap-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
                                 >
-                                  Check Out
+                                  <QrCode className="w-3.5 h-3.5" />
+                                  Beri QR Checkout
                                 </button>
                               </td>
                             </tr>

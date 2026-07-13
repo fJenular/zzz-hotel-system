@@ -129,28 +129,24 @@ export default function ManagerDashboard() {
     if (roomsData) setRoomsList(roomsData)
     setLastRefreshed(new Date())
 
-    // Fetch recent activity
     fetchRecentActivity()
     
     setLoading(false)
   }
 
   const fetchRecentActivity = async () => {
-    // Get recent bookings activity
     const { data: recentBookings } = await supabase
       .from('bookings')
       .select('*, users(full_name), rooms(room_number)')
       .order('updated_at', { ascending: false })
       .limit(5)
 
-    // Get recent restaurant orders
     const { data: recentOrders } = await supabase
       .from('restaurant_orders')
       .select('*, rooms(room_number)')
       .order('created_at', { ascending: false })
       .limit(5)
 
-    // Get recent housekeeping tasks
     const { data: recentTasks } = await supabase
       .from('housekeeping_tasks')
       .select('*, rooms(room_number)')
@@ -163,8 +159,8 @@ export default function ManagerDashboard() {
       activity.push({
         id: `booking-${b.id}`,
         type: b.status === 'checked_in' ? 'checkin' : b.status === 'checked_out' ? 'checkout' : 'booking',
-        message: `${b.users?.full_name || 'Guest'} - Room ${b.rooms?.room_number}`,
-        detail: b.status === 'checked_in' ? 'Checked In' : b.status === 'checked_out' ? 'Checked Out' : `Booking ${b.status}`,
+        message: `${b.users?.full_name || 'Tamu'} - Kamar ${b.rooms?.room_number}`,
+        detail: b.status === 'checked_in' ? 'Telah Check In' : b.status === 'checked_out' ? 'Telah Check Out' : `Pemesanan ${b.status}`,
         time: b.updated_at,
         icon: b.status === 'checked_in' ? 'checkin' : b.status === 'checked_out' ? 'checkout' : 'booking'
       })
@@ -174,8 +170,8 @@ export default function ManagerDashboard() {
       activity.push({
         id: `order-${o.id}`,
         type: 'order',
-        message: `Room ${o.rooms?.room_number || 'Walk-in'}`,
-        detail: `Order Rp ${o.total_price?.toLocaleString()} - ${o.status}`,
+        message: `Kamar ${o.rooms?.room_number || 'Walk-in'}`,
+        detail: `Pesanan Rp ${o.total_price?.toLocaleString()} - ${o.status}`,
         time: o.created_at,
         icon: 'order'
       })
@@ -185,8 +181,8 @@ export default function ManagerDashboard() {
       activity.push({
         id: `task-${t.id}`,
         type: 'cleaning',
-        message: `Room ${t.rooms?.room_number}`,
-        detail: `Cleaning - ${t.status}`,
+        message: `Kamar ${t.rooms?.room_number}`,
+        detail: `Pembersihan - ${t.status}`,
         time: t.created_at,
         icon: 'cleaning'
       })
@@ -217,7 +213,7 @@ export default function ManagerDashboard() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800 antialiased">
-      {/* SIDEBAR: Executive Navy */}
+      {/* SIDEBAR */}
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           <Link href="/" className="flex items-center gap-3">
@@ -226,7 +222,7 @@ export default function ManagerDashboard() {
             </div>
             <div>
               <span className="text-xl font-black text-white tracking-tight block leading-tight">zzz-hotel</span>
-              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest block mt-0.5">Executive Suite</span>
+              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest block mt-0.5">Suite Eksekutif</span>
             </div>
           </Link>
 
@@ -240,7 +236,7 @@ export default function ManagerDashboard() {
               }`}
             >
               <BarChart3 className="w-5 h-5" />
-              <span>Operations Report</span>
+              <span>Laporan Operasi</span>
             </button>
             <button
               onClick={() => setActiveSection('operations')}
@@ -251,14 +247,14 @@ export default function ManagerDashboard() {
               }`}
             >
               <Activity className="w-5 h-5" />
-              <span>Live Operations</span>
+              <span>Operasi Langsung</span>
             </button>
             <Link 
               href="/manager/reports" 
               className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-xl transition-all duration-200"
             >
               <Target className="w-5 h-5" />
-              <span>Reports & Export</span>
+              <span>Laporan & Ekspor</span>
             </Link>
           </nav>
         </div>
@@ -269,7 +265,7 @@ export default function ManagerDashboard() {
               {user?.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'MN'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-200 truncate leading-none">{user?.full_name || 'Manager'}</p>
+              <p className="text-xs font-bold text-slate-200 truncate leading-none">{user?.full_name || 'Manajer'}</p>
               <p className="text-[10px] text-slate-500 font-semibold capitalize mt-1 leading-none">{user?.role?.replace('_', ' ')}</p>
             </div>
           </div>
@@ -279,12 +275,12 @@ export default function ManagerDashboard() {
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-indigo-300 hover:bg-slate-800/50 rounded-xl transition-all duration-200"
           >
             <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
+            <span>Keluar</span>
           </button>
           
           <p className="text-[9px] text-slate-600 font-medium text-center leading-relaxed">
-            ZZZ Hotel Executive Dashboard<br />
-            © 2026 All Rights Reserved
+            Dashboard Eksekutif ZZZ Hotel<br />
+            © 2026 Hak Cipta Dilindungi
           </p>
         </div>
       </aside>
@@ -295,7 +291,7 @@ export default function ManagerDashboard() {
         <header className="bg-white border-b border-slate-100 px-8 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
             <h1 className="text-lg font-black text-slate-900 tracking-tight">
-              {activeSection === 'overview' ? 'Executive Overview' : 'Live Operations Monitor'}
+              {activeSection === 'overview' ? 'Ringkasan Eksekutif' : 'Monitor Operasi Langsung'}
             </h1>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-lg border border-indigo-100/50">
@@ -304,7 +300,7 @@ export default function ManagerDashboard() {
               <button 
                 onClick={fetchAnalytics}
                 className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-slate-50 rounded-lg transition"
-                title={`Last refreshed: ${format(lastRefreshed, 'HH:mm:ss')}`}
+                title={`Refresh terakhir: ${format(lastRefreshed, 'HH:mm:ss')}`}
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -316,20 +312,20 @@ export default function ManagerDashboard() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="Search metrics..." 
+                placeholder="Cari metrik..." 
                 className="pl-9 pr-4 py-2 w-full border border-slate-100 bg-slate-50/50 rounded-2xl text-xs focus:outline-none focus:border-indigo-300 transition-colors"
               />
             </div>
 
             <div className="flex items-center gap-3 border-r border-slate-100 pr-5">
-              <button className="p-2 text-slate-400 hover:text-indigo-500 transition-colors" aria-label="Favorites">
+              <button className="p-2 text-slate-400 hover:text-indigo-500 transition-colors" aria-label="Favorit">
                 <Heart className="w-5 h-5" />
               </button>
-              <button className="p-2 text-slate-400 hover:text-indigo-500 transition-colors relative" aria-label="Messages">
+              <button className="p-2 text-slate-400 hover:text-indigo-500 transition-colors relative" aria-label="Pesan">
                 <Mail className="w-5 h-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 border border-white rounded-full"></span>
               </button>
-              <button className="p-2 text-slate-400 hover:text-indigo-500 transition-colors relative" aria-label="Notifications">
+              <button className="p-2 text-slate-400 hover:text-indigo-500 transition-colors relative" aria-label="Notifikasi">
                 <Bell className="w-5 h-5" />
               </button>
             </div>
@@ -339,8 +335,8 @@ export default function ManagerDashboard() {
                 {user?.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'MN'}
               </div>
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-black text-slate-800 leading-none">{user?.full_name || 'Manager'}</p>
-                <p className="text-[10px] text-slate-400 font-semibold mt-1 leading-none">Hotel Manager</p>
+                <p className="text-xs font-black text-slate-800 leading-none">{user?.full_name || 'Manajer'}</p>
+                <p className="text-[10px] text-slate-400 font-semibold mt-1 leading-none">Manajer Hotel</p>
               </div>
             </div>
           </div>
@@ -349,7 +345,7 @@ export default function ManagerDashboard() {
         {/* CONTENT */}
         <main className="flex-1 p-8 space-y-8 overflow-y-auto">
           {loading ? (
-            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Loading executive analytics...</div>
+            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Memuat analitik eksekutif...</div>
           ) : activeSection === 'overview' ? (
             <>
               {/* KPI CARDS */}
@@ -359,10 +355,10 @@ export default function ManagerDashboard() {
                     <Hotel className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Occupancy Rate</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tingkat Hunian</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{occupancyRate.toFixed(1)}%</p>
                     <div className="flex items-center gap-1 mt-1">
-                      <span className="text-[10px] font-semibold text-slate-500">{stats.occupiedRooms}/{stats.totalRooms} rooms</span>
+                      <span className="text-[10px] font-semibold text-slate-500">{stats.occupiedRooms}/{stats.totalRooms} kamar</span>
                     </div>
                   </div>
                 </div>
@@ -372,7 +368,7 @@ export default function ManagerDashboard() {
                     <DollarSign className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Room Revenue</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pendapatan Kamar</p>
                     <p className="text-lg font-black text-slate-800 mt-0.5">Rp {stats.roomRevenue.toLocaleString()}</p>
                   </div>
                 </div>
@@ -382,7 +378,7 @@ export default function ManagerDashboard() {
                     <TrendingUp className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dining Orders</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pesanan Makan</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.restaurantOrdersCount}</p>
                   </div>
                 </div>
@@ -392,7 +388,7 @@ export default function ManagerDashboard() {
                     <BarChart3 className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dining Revenue</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pendapatan Makan</p>
                     <p className="text-lg font-black text-slate-800 mt-0.5">Rp {stats.restaurantRevenue.toLocaleString()}</p>
                   </div>
                 </div>
@@ -405,7 +401,7 @@ export default function ManagerDashboard() {
                     <DoorOpen className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pending Check-Ins</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Check-In Tertunda</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.pendingCheckIns}</p>
                   </div>
                 </div>
@@ -414,7 +410,7 @@ export default function ManagerDashboard() {
                     <Clock className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Stays (Check-Out)</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Inap Aktif (Check-Out)</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.pendingCheckOuts}</p>
                   </div>
                 </div>
@@ -423,7 +419,7 @@ export default function ManagerDashboard() {
                     <SprayCan className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pending Housekeeping</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Housekeeping Tertunda</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.pendingHousekeeping}</p>
                   </div>
                 </div>
@@ -435,10 +431,10 @@ export default function ManagerDashboard() {
                 <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[28px] p-6 shadow-sm space-y-5">
                   <div className="flex items-center justify-between pb-4 border-b border-slate-50">
                     <div>
-                      <h2 className="text-base font-black text-slate-800 tracking-tight">Hotel Room Layout</h2>
-                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{stats.totalRooms} Rooms Total</p>
+                      <h2 className="text-base font-black text-slate-800 tracking-tight">Tata Letak Kamar Hotel</h2>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Total {stats.totalRooms} Kamar</p>
                     </div>
-                    <button className="p-1 text-slate-400 hover:text-slate-600 transition" aria-label="More options">
+                    <button className="p-1 text-slate-400 hover:text-slate-600 transition" aria-label="Opsi lainnya">
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
                   </div>
@@ -448,31 +444,35 @@ export default function ManagerDashboard() {
                       let statusBg = 'bg-emerald-50 border-emerald-100'
                       let statusDot = 'bg-emerald-500'
                       let statusText = 'text-emerald-700'
+                      let statusLabel = 'Tersedia'
                       if (room.status === 'occupied') {
                         statusBg = 'bg-rose-50 border-rose-100'
                         statusDot = 'bg-rose-500'
                         statusText = 'text-rose-700'
+                        statusLabel = 'Ditempati'
                       } else if (room.status === 'dirty') {
                         statusBg = 'bg-amber-50 border-amber-100'
                         statusDot = 'bg-amber-500'
                         statusText = 'text-amber-700'
+                        statusLabel = 'Kotor'
                       } else if (room.status === 'maintenance') {
                         statusBg = 'bg-slate-100 border-slate-200'
                         statusDot = 'bg-slate-500'
                         statusText = 'text-slate-700'
+                        statusLabel = 'Perbaikan'
                       }
 
                       return (
                         <div 
                           key={room.id}
                           className={`p-3 rounded-xl border font-bold text-center text-xs flex flex-col justify-between h-16 transition duration-200 hover:shadow-sm ${statusBg}`}
-                          title={`Type: ${room.room_types?.name} | Floor: ${room.floor}`}
+                          title={`Tipe: ${room.room_types?.name} | Lantai: ${room.floor}`}
                         >
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-black text-slate-800">{room.room_number}</span>
                             <span className={`w-2 h-2 rounded-full ${statusDot}`}></span>
                           </div>
-                          <span className={`text-[9px] font-semibold capitalize text-left ${statusText}`}>{room.status}</span>
+                          <span className={`text-[9px] font-semibold capitalize text-left ${statusText}`}>{statusLabel}</span>
                         </div>
                       )
                     })}
@@ -484,15 +484,15 @@ export default function ManagerDashboard() {
                   <div className="bg-white border border-slate-100 rounded-[28px] p-6 shadow-sm space-y-6">
                     <div className="flex items-center justify-between pb-4 border-b border-slate-50">
                       <div>
-                        <h2 className="text-base font-black text-slate-800 tracking-tight">Operational Health</h2>
-                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Key metrics breakdown</p>
+                        <h2 className="text-base font-black text-slate-800 tracking-tight">Kesehatan Operasional</h2>
+                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Rincian metrik utama</p>
                       </div>
                     </div>
 
                     <div className="space-y-5">
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs font-semibold text-slate-500">
-                          <span>Occupied Rooms</span>
+                          <span>Kamar Ditempati</span>
                           <span className="text-slate-800">{stats.occupiedRooms} / {stats.totalRooms}</span>
                         </div>
                         <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
@@ -502,7 +502,7 @@ export default function ManagerDashboard() {
 
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs font-semibold text-slate-500">
-                          <span>Dirty / Cleaning Pending</span>
+                          <span>Kotor / Menunggu Pembersihan</span>
                           <span className="text-slate-800">{stats.dirtyRooms} / {stats.totalRooms}</span>
                         </div>
                         <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
@@ -512,7 +512,7 @@ export default function ManagerDashboard() {
 
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs font-semibold text-slate-500">
-                          <span>Available Rooms</span>
+                          <span>Kamar Tersedia</span>
                           <span className="text-slate-800">{availableRooms} / {stats.totalRooms}</span>
                         </div>
                         <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
@@ -525,24 +525,24 @@ export default function ManagerDashboard() {
 
                     <div className="space-y-4">
                       <div className="flex justify-between items-center pb-3 border-b border-slate-50">
-                        <span className="text-xs font-semibold text-slate-400">Total Bookings (Lifetime)</span>
-                        <span className="text-sm font-black text-slate-800">{stats.totalBookings} Bookings</span>
+                        <span className="text-xs font-semibold text-slate-400">Total Pemesanan (Seumur Hidup)</span>
+                        <span className="text-sm font-black text-slate-800">{stats.totalBookings} Pemesanan</span>
                       </div>
 
                       <div className="flex justify-between items-center pb-3 border-b border-slate-50">
-                        <span className="text-xs font-semibold text-slate-400">Active Staff</span>
-                        <span className="text-sm font-black text-slate-800">{stats.totalStaff} Staff</span>
+                        <span className="text-xs font-semibold text-slate-400">Staf Aktif</span>
+                        <span className="text-sm font-black text-slate-800">{stats.totalStaff} Staf</span>
                       </div>
 
                       <div className="flex justify-between items-center pb-3 border-b border-slate-50">
-                        <span className="text-xs font-semibold text-slate-400">Active Kitchen Orders</span>
-                        <span className="text-sm font-black text-slate-800">{stats.activeRestaurantOrders} Orders</span>
+                        <span className="text-xs font-semibold text-slate-400">Pesanan Dapur Aktif</span>
+                        <span className="text-sm font-black text-slate-800">{stats.activeRestaurantOrders} Pesanan</span>
                       </div>
 
                       <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-blue-50/50 border border-indigo-100/50">
                         <div className="flex justify-between items-center">
                           <div>
-                            <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">Total Revenue</p>
+                            <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">Total Pendapatan</p>
                             <p className="text-lg font-black text-indigo-700">Rp {totalRevenue.toLocaleString()}</p>
                           </div>
                           <div className="p-3 bg-indigo-500 text-white rounded-xl shadow-md shadow-indigo-200">
@@ -565,14 +565,14 @@ export default function ManagerDashboard() {
                     <DoorOpen className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Front Desk</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Resepsionis</p>
                     <div className="flex items-center gap-4 mt-1.5">
                       <div>
-                        <p className="text-xs text-slate-500">Check-Ins</p>
+                        <p className="text-xs text-slate-500">Check-In</p>
                         <p className="text-lg font-black text-slate-800">{stats.pendingCheckIns}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Check-Outs</p>
+                        <p className="text-xs text-slate-500">Check-Out</p>
                         <p className="text-lg font-black text-slate-800">{stats.pendingCheckOuts}</p>
                       </div>
                     </div>
@@ -588,11 +588,11 @@ export default function ManagerDashboard() {
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Housekeeping</p>
                     <div className="flex items-center gap-4 mt-1.5">
                       <div>
-                        <p className="text-xs text-slate-500">Pending</p>
+                        <p className="text-xs text-slate-500">Tertunda</p>
                         <p className="text-lg font-black text-slate-800">{stats.pendingHousekeeping}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Dirty Rooms</p>
+                        <p className="text-xs text-slate-500">Kamar Kotor</p>
                         <p className="text-lg font-black text-slate-800">{stats.dirtyRooms}</p>
                       </div>
                     </div>
@@ -605,14 +605,14 @@ export default function ManagerDashboard() {
                     <Utensils className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kitchen / Restaurant</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dapur / Restoran</p>
                     <div className="flex items-center gap-4 mt-1.5">
                       <div>
-                        <p className="text-xs text-slate-500">Active Orders</p>
+                        <p className="text-xs text-slate-500">Pesanan Aktif</p>
                         <p className="text-lg font-black text-slate-800">{stats.activeRestaurantOrders}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Total Orders</p>
+                        <p className="text-xs text-slate-500">Total Pesanan</p>
                         <p className="text-lg font-black text-slate-800">{stats.restaurantOrdersCount}</p>
                       </div>
                     </div>
@@ -627,14 +627,14 @@ export default function ManagerDashboard() {
                   <div>
                     <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
                       <Activity className="w-5 h-5 text-indigo-500" />
-                      Live Activity Feed
+                      Umpan Aktivitas Langsung
                     </h2>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
-                      Real-time updates from all departments
+                      Pembaruan real-time dari semua departemen
                     </p>
                   </div>
                   <span className="text-[10px] text-slate-400 font-medium">
-                    Last refresh: {format(lastRefreshed, 'HH:mm:ss')}
+                    Refresh terakhir: {format(lastRefreshed, 'HH:mm:ss')}
                   </span>
                 </div>
 
@@ -642,8 +642,8 @@ export default function ManagerDashboard() {
                   {recentActivity.length === 0 ? (
                     <div className="text-center py-12 text-slate-400">
                       <Activity className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-                      <p className="font-semibold">No recent activity</p>
-                      <p className="text-xs mt-1">Waiting for system events...</p>
+                      <p className="font-semibold">Tidak ada aktivitas terbaru</p>
+                      <p className="text-xs mt-1">Menunggu acara sistem...</p>
                     </div>
                   ) : (
                     recentActivity.slice(0, 12).map((item) => (
@@ -666,15 +666,15 @@ export default function ManagerDashboard() {
 
               {/* QUICK ACTIONS */}
               <div className="bg-white border border-slate-100 rounded-[28px] p-6 shadow-sm animate-slide-up">
-                <h2 className="text-base font-black text-slate-800 tracking-tight mb-5">Quick Actions</h2>
+                <h2 className="text-base font-black text-slate-800 tracking-tight mb-5">Aksi Cepat</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <Link href="/manager/reports" className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-indigo-50 border border-indigo-100 hover:bg-indigo-100/50 transition-colors group">
                     <BarChart3 className="w-6 h-6 text-indigo-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider">View Reports</span>
+                    <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider">Lihat Laporan</span>
                   </Link>
                   <Link href="/receptionist/dashboard" className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-100/50 transition-colors group">
                     <DoorOpen className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Front Desk</span>
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Resepsionis</span>
                   </Link>
                   <Link href="/housekeeping/dashboard" className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-amber-50 border border-amber-100 hover:bg-amber-100/50 transition-colors group">
                     <SprayCan className="w-6 h-6 text-amber-600 group-hover:scale-110 transition-transform" />
@@ -682,7 +682,7 @@ export default function ManagerDashboard() {
                   </Link>
                   <Link href="/restaurant/dashboard" className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-rose-50 border border-rose-100 hover:bg-rose-100/50 transition-colors group">
                     <ChefHat className="w-6 h-6 text-rose-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider">Kitchen</span>
+                    <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider">Dapur</span>
                   </Link>
                 </div>
               </div>

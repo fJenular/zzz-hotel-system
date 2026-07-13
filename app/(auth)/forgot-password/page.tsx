@@ -51,27 +51,27 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <AuthShell
-        title="Check your inbox"
-        description="A password reset link has been sent to your email address."
+        title="Periksa email Anda"
+        description="Tautan pengaturan ulang kata sandi telah dikirim ke alamat email Anda."
         icon={CheckCircle}
       >
         <div className="space-y-5 text-center">
           <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4">
-            <p className="mb-1 text-xs font-semibold text-green-800 uppercase tracking-wider">Reset link sent to:</p>
+            <p className="mb-1 text-xs font-semibold text-green-800 uppercase tracking-wider">Tautan dikirim ke:</p>
             <p className="break-all text-sm font-semibold text-green-700">{email}</p>
           </div>
 
           <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 text-left">
             <p className="text-xs font-semibold text-slate-700 mb-1">💡 Tips:</p>
             <ul className="space-y-1 text-xs text-slate-500">
-              <li>• Check your spam / junk folder if you don&apos;t see it</li>
-              <li>• The link expires in 1 hour</li>
-              <li>• Use the most recent email if you requested multiple times</li>
+              <li>• Periksa folder spam / junk jika Anda tidak menemukannya</li>
+              <li>• Tautan ini berlaku selama 1 jam</li>
+              <li>• Gunakan tautan terbaru jika Anda meminta ulang</li>
             </ul>
           </div>
 
           <Button asChild className={authSecondaryButtonClass}>
-            <Link href="/login">Back to login</Link>
+            <Link href="/login">Kembali ke halaman masuk</Link>
           </Button>
         </div>
       </AuthShell>
@@ -80,12 +80,12 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthShell
-      title="Forgot password?"
-      description="Enter your email and we will send a reset link to your inbox."
+      title="Lupa Kata Sandi?"
+      description="Masukkan email Anda dan kami akan mengirimkan tautan untuk mengatur ulang kata sandi."
       icon={Mail}
       footer={
         <Link href="/login" className={authLinkClass}>
-          Back to login
+          Kembali ke halaman masuk
         </Link>
       }
     >
@@ -99,7 +99,7 @@ export default function ForgotPasswordPage() {
 
         <div className="space-y-2">
           <label htmlFor="email" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            Email Address
+            Alamat Email
           </label>
           <div className="relative">
             <Mail className={authIconClass} />
@@ -125,10 +125,10 @@ export default function ForgotPasswordPage() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending reset link...
+              Mengirim tautan...
             </>
           ) : (
-            'Send Reset Link'
+            'Kirim Tautan Reset'
           )}
         </Button>
       </form>

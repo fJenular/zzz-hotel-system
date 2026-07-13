@@ -24,7 +24,9 @@ export default function AdminRoomsPage() {
     room_number: '',
     room_type_id: '',
     floor: '',
-    status: 'available'
+    status: 'available',
+    description: '',
+    image_url: ''
   })
 
   // Edit Room State
@@ -33,7 +35,9 @@ export default function AdminRoomsPage() {
     room_number: '',
     room_type_id: '',
     floor: '',
-    status: 'available'
+    status: 'available',
+    description: '',
+    image_url: ''
   })
 
   useEffect(() => {
@@ -94,7 +98,14 @@ export default function AdminRoomsPage() {
     try {
       const { error } = await supabase
         .from('rooms')
-        .insert(newRoom)
+        .insert({
+          room_number: newRoom.room_number,
+          room_type_id: newRoom.room_type_id,
+          floor: newRoom.floor,
+          status: newRoom.status,
+          description: newRoom.description,
+          image_url: newRoom.image_url
+        })
 
       if (error) throw error
       alert('Room created successfully!')
@@ -102,11 +113,18 @@ export default function AdminRoomsPage() {
         room_number: '',
         room_type_id: roomTypes[0]?.id || '',
         floor: '',
-        status: 'available'
+        status: 'available',
+        description: '',
+        image_url: ''
       })
       fetchData()
     } catch (err: any) {
-      alert(err.message || 'Failed to create room')
+      console.error(err)
+      if (err.message?.includes('column') || err.message?.includes('schema cache')) {
+        alert('Gagal membuat kamar. Tampaknya Anda belum menjalankan migrasi database. Silakan jalankan file SQL `scripts/migration-add-room-fields.sql` di Supabase SQL Editor terlebih dahulu.\n\nDetail: ' + err.message)
+      } else {
+        alert(err.message || 'Failed to create room')
+      }
     }
   }
 
@@ -116,7 +134,9 @@ export default function AdminRoomsPage() {
       room_number: room.room_number,
       room_type_id: room.room_type_id,
       floor: room.floor,
-      status: room.status
+      status: room.status,
+      description: room.description || '',
+      image_url: room.image_url || ''
     })
   }
 
@@ -128,7 +148,14 @@ export default function AdminRoomsPage() {
     try {
       const { error } = await supabase
         .from('rooms')
-        .update(editForm)
+        .update({
+          room_number: editForm.room_number,
+          room_type_id: editForm.room_type_id,
+          floor: editForm.floor,
+          status: editForm.status,
+          description: editForm.description,
+          image_url: editForm.image_url
+        })
         .eq('id', roomId)
 
       if (error) throw error
@@ -136,7 +163,12 @@ export default function AdminRoomsPage() {
       setEditingRoomId(null)
       fetchData()
     } catch (err: any) {
-      alert(err.message || 'Failed to update room')
+      console.error(err)
+      if (err.message?.includes('column') || err.message?.includes('schema cache')) {
+        alert('Gagal memperbarui kamar. Silakan jalankan file SQL `scripts/migration-add-room-fields.sql` di Supabase SQL Editor terlebih dahulu.\n\nDetail: ' + err.message)
+      } else {
+        alert(err.message || 'Failed to update room')
+      }
     }
   }
 
@@ -451,6 +483,27 @@ export default function AdminRoomsPage() {
                       <option value="dirty">Dirty</option>
                       <option value="maintenance">Maintenance</option>
                     </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block tracking-wider uppercase text-[10px] font-bold text-slate-400">Deskripsi Kamar (Opsional)</label>
+                    <textarea
+                      placeholder="Deskripsi khusus kamar ini..."
+                      value={newRoom.description}
+                      onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
+                      className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-400 bg-white text-slate-800 h-20 resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block tracking-wider uppercase text-[10px] font-bold text-slate-400">URL Gambar Kamar (Opsional)</label>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      value={newRoom.image_url}
+                      onChange={(e) => setNewRoom({ ...newRoom, image_url: e.target.value })}
+                      className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-400 bg-white text-slate-800"
+                    />
                   </div>
 
                   <button

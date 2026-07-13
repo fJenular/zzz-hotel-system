@@ -41,23 +41,23 @@ export default function RegisterPage() {
     const errors: FieldErrors = {}
 
     if (!formData.fullName.trim()) {
-      errors.fullName = 'Full name is required'
+      errors.fullName = 'Nama lengkap wajib diisi'
     }
 
     if (!formData.email.includes('@') || !formData.email.includes('.')) {
-      errors.email = 'Invalid email format'
+      errors.email = 'Format email tidak valid'
     }
 
     if (!formData.phone.trim() || formData.phone.length < 10) {
-      errors.phone = 'Phone number must be at least 10 digits'
+      errors.phone = 'Nomor telepon minimal 10 angka'
     }
 
     if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters'
+      errors.password = 'Kata sandi minimal 8 karakter'
     }
 
     if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match'
+      errors.confirmPassword = 'Kata sandi tidak cocok'
     }
 
     setFieldErrors(errors)
@@ -114,14 +114,14 @@ export default function RegisterPage() {
 
   return (
     <AuthShell
-      title="Create account"
-      description="Join ZZZ Hotel to book faster and keep your stay details in one place."
+      title="Daftar Akun"
+      description="Bergabung dengan ZZZ Hotel untuk pemesanan lebih cepat dan kelola reservasi Anda dalam satu tempat."
       icon={UserPlus}
       footer={
         <>
-          Already have an account?{' '}
+          Sudah punya akun?{' '}
           <Link href="/login" className={authLinkClass}>
-            Sign in
+            Masuk
           </Link>
         </>
       }
@@ -137,7 +137,7 @@ export default function RegisterPage() {
         {/* Full Name */}
         <div className="space-y-1">
           <label htmlFor="fullName" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            Full Name
+            Nama Lengkap
           </label>
           <div className="relative">
             <User className={authIconClass} />
@@ -158,7 +158,7 @@ export default function RegisterPage() {
         {/* Email Address */}
         <div className="space-y-1">
           <label htmlFor="email" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            Email Address
+            Alamat Email
           </label>
           <div className="relative">
             <Mail className={authIconClass} />
@@ -180,7 +180,7 @@ export default function RegisterPage() {
         {/* Phone Number */}
         <div className="space-y-1">
           <label htmlFor="phone" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            Phone Number
+            Nomor Telepon
           </label>
           <div className="relative">
             <Phone className={authIconClass} />
@@ -201,7 +201,7 @@ export default function RegisterPage() {
         {/* Password */}
         <div className="space-y-1">
           <label htmlFor="password" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            Password
+            Kata Sandi
           </label>
           <div className="relative">
             <Lock className={authIconClass} />
@@ -220,19 +220,19 @@ export default function RegisterPage() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-red-500 p-1"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {fieldErrors.password && <p className="text-red-500 text-xs mt-1 font-medium">{fieldErrors.password}</p>}
-          {!fieldErrors.password && <p className="text-[10px] text-slate-400 font-medium">Minimum 8 characters</p>}
+          {!fieldErrors.password && <p className="text-[10px] text-slate-400 font-medium">Minimal 8 karakter</p>}
         </div>
 
         {/* Confirm Password */}
         <div className="space-y-1">
           <label htmlFor="confirmPassword" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            Confirm Password
+            Konfirmasi Kata Sandi
           </label>
           <div className="relative">
             <Lock className={authIconClass} />
@@ -269,10 +269,10 @@ export default function RegisterPage() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating account...
+              Mendaftar...
             </>
           ) : (
-            'Create Account'
+            'Buat Akun'
           )}
         </Button>
       </form>

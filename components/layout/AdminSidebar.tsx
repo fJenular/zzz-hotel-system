@@ -18,32 +18,32 @@ export default function AdminSidebar({ userName = 'Administrator', userRole = 'a
 
   const navCategories = [
     {
-      label: 'Main Site',
+      label: 'Situs Utama',
       items: [
-        { href: '/', label: 'Home Page', icon: Home },
-        { href: '/booking/select-room', label: 'Discover Rooms', icon: Compass },
+        { href: '/', label: 'Halaman Utama', icon: Home },
+        { href: '/booking/select-room', label: 'Cari Kamar', icon: Compass },
       ]
     },
     {
-      label: 'Core Admin',
+      label: 'Admin Inti',
       items: [
         { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/admin/users', label: 'Guests & Users', icon: Users },
+        { href: '/admin/users', label: 'Tamu & Pengguna', icon: Users },
       ]
     },
     {
-      label: 'Hotel Management',
+      label: 'Manajemen Hotel',
       items: [
-        { href: '/admin/rooms', label: 'Room List', icon: DoorOpen },
-        { href: '/admin/room-types', label: 'Room Types', icon: Award },
-        { href: '/admin/bookings', label: 'Bookings', icon: Calendar },
-        { href: '/admin/payments', label: 'Payments', icon: CreditCard },
+        { href: '/admin/rooms', label: 'Daftar Kamar', icon: DoorOpen },
+        { href: '/admin/room-types', label: 'Tipe Kamar', icon: Award },
+        { href: '/admin/bookings', label: 'Pemesanan', icon: Calendar },
+        { href: '/admin/payments', label: 'Pembayaran', icon: CreditCard },
       ]
     },
     {
-      label: 'Services',
+      label: 'Layanan',
       items: [
-        { href: '/admin/menus', label: 'Restaurant Menus', icon: Utensils },
+        { href: '/admin/menus', label: 'Menu Restoran', icon: Utensils },
       ]
     }
   ]
@@ -63,7 +63,7 @@ export default function AdminSidebar({ userName = 'Administrator', userRole = 'a
           </div>
           <div>
             <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">zzz-hotel</span>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">Admin Dashboard</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">Dashboard Admin</span>
           </div>
         </Link>
 
@@ -114,8 +114,8 @@ export default function AdminSidebar({ userName = 'Administrator', userRole = 'a
         </div>
         
         <p className="text-[9px] text-slate-400 font-medium text-center leading-relaxed">
-          ZZZ Hotel Admin Dashboard<br />
-          © 2026 All Rights Reserved
+          Dashboard Admin ZZZ Hotel<br />
+          © 2026 Hak Cipta Dilindungi Undang-Undang
         </p>
       </div>
     </aside>

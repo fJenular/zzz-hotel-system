@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
 
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('❌ SUPABASE_SERVICE_ROLE_KEY not found in .env.local')
+  console.error('âŒ SUPABASE_SERVICE_ROLE_KEY not found in .env.local')
   process.exit(1)
 }
 
@@ -14,12 +14,12 @@ const supabaseAdmin = createClient(
 )
 
 async function seedDatabase() {
-  console.log('🌱 Seeding Database with Sample Data...\n')
+  console.log('ðŸŒ± Seeding Database with Sample Data...\n')
 
   // ============================================
   // CLEANUP
   // ============================================
-  console.log('🧹 Cleaning up old data...')
+  console.log('ðŸ§¹ Cleaning up old data...')
   
   try {
     // Child tables first
@@ -38,22 +38,65 @@ async function seedDatabase() {
     await supabaseAdmin.from('restaurant_categories').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('cms_sections').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     
-    console.log('✅ Old data cleaned\n')
+    console.log('âœ… Old data cleaned\n')
   } catch (error: any) {
-    console.error('⚠️  Cleanup warning:', error.message)
+    console.error('âš ï¸  Cleanup warning:', error.message)
     console.log('   Continuing...\n')
   }
 
   // ============================================
   // 1. ROOM TYPES
   // ============================================
-  console.log('1️⃣ Seeding Room Types...')
+  console.log('1ï¸âƒ£ Seeding Room Types...')
   
   const roomTypes = [
-    { name: 'Standard Room', description: 'Comfortable room with basic amenities', base_price: 500000, max_occupancy: 2 },
-    { name: 'Deluxe Room', description: 'Spacious room with city view', base_price: 850000, max_occupancy: 3 },
-    { name: 'Suite Room', description: 'Luxury suite with living room', base_price: 1500000, max_occupancy: 4 },
-    { name: 'Family Room', description: 'Perfect for families with kids', base_price: 1200000, max_occupancy: 5 }
+    { name: 'Nusa Indah',
+      description: 'Kamar nyaman dengan sentuhan dekorasi khas Nusantara.',
+      base_price: 500000,
+      max_occupancy: 2,
+      max_adults: 2,
+      max_children: 1,
+      bed_configuration: '1 King Bed atau 2 Single Bed',
+      area_sqm: 28,
+      view_type: 'Kota',
+      facilities: ['AC', 'WiFi Gratis', 'TV LED 32"', 'Kamar Mandi Dalam', 'Air Panas']
+    },
+    {
+      name: 'Candi Biru',
+      description: 'Kamar elegan dengan interior terinspirasi keindahan candi-candi Nusantara. Pemandangan kota yang indah, ruangan lebih luas, dan fasilitas premium.',
+      base_price: 850000,
+      max_occupancy: 3,
+      max_adults: 2,
+      max_children: 2,
+      bed_configuration: '1 King Bed + 1 Sofa Bed',
+      area_sqm: 36,
+      view_type: 'Kota & Kolam Renang',
+      facilities: ['AC', 'WiFi Gratis', 'TV LED 43"', 'Kamar Mandi Dalam', 'Bathtub', 'Mini Bar']
+    },
+    {
+      name: 'Suite Samudra',
+      description: 'Suite mewah dengan nuansa bahari Nusantara. Ruang tamu terpisah, pemandangan laut menakjubkan, dan layanan butler 24 jam.',
+      base_price: 1500000,
+      max_occupancy: 4,
+      max_adults: 2,
+      max_children: 2,
+      bed_configuration: '1 King Bed + 1 Queen Sofa Bed',
+      area_sqm: 56,
+      view_type: 'Samudra & Cakrawala',
+      facilities: ['AC', 'WiFi Premium', 'TV LED 55"', 'Ruang Tamu Terpisah', 'Bathtub Mewah', 'Mini Bar Lengkap', 'Mesin Kopi Espresso']
+    },
+    {
+      name: 'Keluarga Nusantara',
+      description: 'Kamar luas dirancang khusus untuk keluarga dengan area bermain anak dan dekorasi ceria bernuansa budaya Indonesia.',
+      base_price: 1200000,
+      max_occupancy: 5,
+      max_adults: 3,
+      max_children: 3,
+      bed_configuration: '1 King Bed + 2 Single Bed',
+      area_sqm: 48,
+      view_type: 'Taman & Kolam Renang',
+      facilities: ['AC', 'WiFi Gratis', 'TV LED 50"', 'Area Bermain Anak', 'Kamar Mandi Dalam', 'Bathtub', 'Mini Bar']
+    }
   ]
 
   const { data: insertedRoomTypes, error: rtError } = await supabaseAdmin
@@ -62,15 +105,15 @@ async function seedDatabase() {
     .select()
 
   if (rtError) {
-    console.error('❌ Room types failed:', rtError.message)
+    console.error('âŒ Room types failed:', rtError.message)
     return
   }
-  console.log(`✅ Inserted ${insertedRoomTypes?.length} room types\n`)
+  console.log(`âœ… Inserted ${insertedRoomTypes?.length} room types\n`)
 
   // ============================================
   // 2. ROOMS
   // ============================================
-  console.log('2️⃣ Seeding Rooms...')
+  console.log('2ï¸âƒ£ Seeding Rooms...')
 
   if (insertedRoomTypes && insertedRoomTypes.length > 0) {
     const rooms = []
@@ -94,10 +137,10 @@ async function seedDatabase() {
       .select()
 
     if (roomError) {
-      console.error('❌ Rooms failed:', roomError.message)
+      console.error('âŒ Rooms failed:', roomError.message)
       console.error('   Details:', JSON.stringify(roomError, null, 2))
     } else {
-      console.log(`✅ Inserted ${insertedRooms?.length} rooms`)
+      console.log(`âœ… Inserted ${insertedRooms?.length} rooms`)
       console.log(`   Numbers: ${insertedRooms?.map(r => r.room_number).join(', ')}\n`)
     }
   }
@@ -105,7 +148,7 @@ async function seedDatabase() {
   // ============================================
   // 3. RESTAURANT CATEGORIES
   // ============================================
-  console.log('3️⃣ Seeding Restaurant Categories...')
+  console.log('3ï¸âƒ£ Seeding Restaurant Categories...')
 
   const categories = [
     { name: 'Main Course', description: 'Main dishes' },
@@ -120,16 +163,16 @@ async function seedDatabase() {
     .select()
 
   if (catError) {
-    console.error('❌ Categories failed:', catError.message)
-    console.log('   ⚠️  Table might not exist. Run the SQL fix first.\n')
+    console.error('âŒ Categories failed:', catError.message)
+    console.log('   âš ï¸  Table might not exist. Run the SQL fix first.\n')
   } else {
-    console.log(`✅ Inserted ${insertedCategories?.length} categories\n`)
+    console.log(`âœ… Inserted ${insertedCategories?.length} categories\n`)
   }
 
   // ============================================
   // 4. RESTAURANT MENUS
   // ============================================
-  console.log('4️⃣ Seeding Restaurant Menus...')
+  console.log('4ï¸âƒ£ Seeding Restaurant Menus...')
 
   const menus = [
     { name: 'Nasi Goreng Spesial', description: 'Nasi goreng dengan telur, ayam, dan udang', price: 45000, category: 'Main Course', is_available: true },
@@ -146,15 +189,15 @@ async function seedDatabase() {
     .select()
 
   if (menuError) {
-    console.error('❌ Menus failed:', menuError.message)
+    console.error('âŒ Menus failed:', menuError.message)
   } else {
-    console.log(`✅ Inserted ${insertedMenus?.length} menus\n`)
+    console.log(`âœ… Inserted ${insertedMenus?.length} menus\n`)
   }
 
   // ============================================
   // 5. CMS SECTIONS
   // ============================================
-  console.log('5️⃣ Seeding CMS Sections...')
+  console.log('5ï¸âƒ£ Seeding CMS Sections...')
 
   const cmsSections = [
     {
@@ -180,27 +223,32 @@ async function seedDatabase() {
     .select()
 
   if (cmsError) {
-    console.error('❌ CMS failed:', cmsError.message)
+    console.error('âŒ CMS failed:', cmsError.message)
   } else {
-    console.log(`✅ Inserted ${insertedCms?.length} CMS sections\n`)
+    console.log(`âœ… Inserted ${insertedCms?.length} CMS sections\n`)
   }
 
   // ============================================
   // 6. VERIFY
   // ============================================
-  console.log('6️⃣ Verifying Data...')
+  console.log('6ï¸âƒ£ Verifying Data...')
 
   const tables = ['room_types', 'rooms', 'restaurant_menus', 'cms_sections']
-  console.log('\n📊 Database Summary:')
+  console.log('\nðŸ“Š Database Summary:')
   
   for (const table of tables) {
     const { count } = await supabaseAdmin.from(table).select('*', { count: 'exact', head: true })
     console.log(`  ${table}: ${count || 0}`)
   }
 
-  console.log('\n🎉 Database seeding completed!')
+  console.log('\nðŸŽ‰ Database seeding completed!')
 }
 
 seedDatabase().catch(error => {
-  console.error('\n💥 Seeding failed:', error)
+  console.error('\nðŸ’¥ Seeding failed:', error)
 })
+
+
+
+
+

@@ -71,10 +71,11 @@ export default function RestaurantDashboard() {
         .eq('id', orderId)
 
       if (error) throw error
-      alert(`Order is now ${newStatus}!`)
+      const statusLabel = newStatus === 'preparing' ? 'sedang diproses' : newStatus === 'delivered' ? 'sudah diantarkan' : newStatus
+      alert(`Pesanan sekarang ${statusLabel}!`)
       fetchOrders()
     } catch (err: any) {
-      alert(err.message || 'Failed to update order status')
+      alert(err.message || 'Gagal memperbarui status pesanan')
     }
   }
 
@@ -89,7 +90,7 @@ export default function RestaurantDashboard() {
 
   return (
     <div className="flex min-h-screen bg-emerald-50/30 font-sans text-slate-800 antialiased">
-      {/* ===== SIDEBAR: Culinary Green ===== */}
+      {/* SIDEBAR */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-emerald-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           <Link href="/" className="flex items-center gap-3">
@@ -98,29 +99,29 @@ export default function RestaurantDashboard() {
             </div>
             <div>
               <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">zzz-hotel</span>
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest block mt-0.5">Kitchen</span>
+              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest block mt-0.5">Dapur</span>
             </div>
           </Link>
 
           <nav className="space-y-1">
             <div className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100/50 rounded-xl">
               <ChefHat className="w-5 h-5 text-emerald-500" />
-              <span>Kitchen Orders</span>
+              <span>Pesanan Dapur</span>
             </div>
             <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-xl transition-all duration-200 cursor-pointer">
               <CookingPot className="w-5 h-5" />
-              <span>Menu Board</span>
+              <span>Menu</span>
             </div>
             <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-xl transition-all duration-200 cursor-pointer">
               <Soup className="w-5 h-5" />
-              <span>Inventory</span>
+              <span>Inventaris</span>
             </div>
           </nav>
 
           <div className="pt-4 space-y-2">
             <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-green-50/50 border border-emerald-100/50">
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kitchen Staff</p>
-              <p className="text-xs font-bold text-slate-800 mt-0.5">{user?.full_name || 'Staff'}</p>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Staf Dapur</p>
+              <p className="text-xs font-bold text-slate-800 mt-0.5">{user?.full_name || 'Staf'}</p>
               <p className="text-[10px] text-slate-500 capitalize">{user?.role?.replace('_', ' ')}</p>
             </div>
           </div>
@@ -132,25 +133,25 @@ export default function RestaurantDashboard() {
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all duration-200"
           >
             <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
+            <span>Keluar</span>
           </button>
           <p className="text-[9px] text-slate-400 font-medium text-center leading-relaxed">
-            ZZZ Hotel Kitchen<br />
-            © 2026 All Rights Reserved
+            Dapur ZZZ Hotel<br />
+            © 2026 Hak Cipta Dilindungi
           </p>
         </div>
       </aside>
 
-      {/* ===== MAIN CONTENT ===== */}
+      {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* HEADER */}
         <header className="bg-white border-b border-emerald-100/50 px-8 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
-            <h1 className="text-lg font-black text-slate-900 tracking-tight">Kitchen Orders</h1>
+            <h1 className="text-lg font-black text-slate-900 tracking-tight">Pesanan Dapur</h1>
             <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-lg border border-emerald-100/50">
               <span className="inline-flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </span>
           </div>
@@ -160,13 +161,13 @@ export default function RestaurantDashboard() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="Search orders..." 
+                placeholder="Cari pesanan..." 
                 className="pl-9 pr-4 py-2 w-full border border-emerald-100 bg-emerald-50/20 rounded-2xl text-xs focus:outline-none focus:border-emerald-300 transition-colors"
               />
             </div>
 
             <div className="flex items-center gap-3 border-r border-emerald-100 pr-5">
-              <button className="p-2 text-slate-400 hover:text-emerald-500 transition-colors relative" aria-label="Notifications">
+              <button className="p-2 text-slate-400 hover:text-emerald-500 transition-colors relative" aria-label="Notifikasi">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 border border-white rounded-full"></span>
               </button>
@@ -177,7 +178,7 @@ export default function RestaurantDashboard() {
                 {user?.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'KS'}
               </div>
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-black text-slate-800 leading-none">{user?.full_name || 'Kitchen Staff'}</p>
+                <p className="text-xs font-black text-slate-800 leading-none">{user?.full_name || 'Staf Dapur'}</p>
                 <p className="text-[10px] text-slate-400 font-semibold mt-1 leading-none">Chef</p>
               </div>
             </div>
@@ -187,7 +188,7 @@ export default function RestaurantDashboard() {
         {/* CONTENT */}
         <main className="flex-1 p-8 space-y-8 overflow-y-auto">
           {loading ? (
-            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Loading kitchen orders...</div>
+            <div className="text-center py-16 text-slate-400 font-semibold animate-pulse">Memuat pesanan dapur...</div>
           ) : (
             <>
               {/* KPI ROW */}
@@ -197,7 +198,7 @@ export default function RestaurantDashboard() {
                     <Clock className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pending</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tertunda</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{pendingOrders.length}</p>
                   </div>
                 </div>
@@ -206,7 +207,7 @@ export default function RestaurantDashboard() {
                     <CookingPot className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Preparing</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sedang Diproses</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{preparingOrders.length}</p>
                   </div>
                 </div>
@@ -215,7 +216,7 @@ export default function RestaurantDashboard() {
                     <CheckCircle className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Delivered</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sudah Diantarkan</p>
                     <p className="text-2xl font-black text-slate-800 mt-0.5">{deliveredOrders.length}</p>
                   </div>
                 </div>
@@ -228,7 +229,7 @@ export default function RestaurantDashboard() {
                   <div className="flex justify-between items-center pb-3 border-b border-emerald-50">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
-                      <h3 className="font-bold text-slate-800">New Orders</h3>
+                      <h3 className="font-bold text-slate-800">Pesanan Baru</h3>
                     </div>
                     <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{pendingOrders.length}</span>
                   </div>
@@ -236,7 +237,7 @@ export default function RestaurantDashboard() {
                   {pendingOrders.length === 0 ? (
                     <div className="text-center py-10">
                       <CheckCircle className="w-10 h-10 text-emerald-300 mx-auto mb-2" />
-                      <p className="text-xs text-slate-400 font-medium">No new orders placed.</p>
+                      <p className="text-xs text-slate-400 font-medium">Belum ada pesanan baru.</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
@@ -245,7 +246,7 @@ export default function RestaurantDashboard() {
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                              <span className="text-sm font-bold text-emerald-700">Room {order.rooms?.room_number || 'TBD'}</span>
+                              <span className="text-sm font-bold text-emerald-700">Kamar {order.rooms?.room_number || 'TBD'}</span>
                             </div>
                             <span className="text-xs font-bold text-slate-500">Rp {order.total_price.toLocaleString()}</span>
                           </div>
@@ -264,7 +265,7 @@ export default function RestaurantDashboard() {
                             className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-sm hover:shadow-md"
                           >
                             <Play className="w-3.5 h-3.5" />
-                            Accept & Prepare
+                            Terima & Proses
                           </button>
                         </div>
                       ))}
@@ -277,7 +278,7 @@ export default function RestaurantDashboard() {
                   <div className="flex justify-between items-center pb-3 border-b border-amber-50">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
-                      <h3 className="font-bold text-slate-800">Preparing</h3>
+                      <h3 className="font-bold text-slate-800">Sedang Diproses</h3>
                     </div>
                     <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-0.5 rounded-full">{preparingOrders.length}</span>
                   </div>
@@ -285,7 +286,7 @@ export default function RestaurantDashboard() {
                   {preparingOrders.length === 0 ? (
                     <div className="text-center py-10">
                       <CookingPot className="w-10 h-10 text-amber-300 mx-auto mb-2" />
-                      <p className="text-xs text-slate-400 font-medium">No orders being prepared.</p>
+                      <p className="text-xs text-slate-400 font-medium">Tidak ada pesanan yang sedang diproses.</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
@@ -294,7 +295,7 @@ export default function RestaurantDashboard() {
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                              <span className="text-sm font-bold text-amber-700">Room {order.rooms?.room_number || 'TBD'}</span>
+                              <span className="text-sm font-bold text-amber-700">Kamar {order.rooms?.room_number || 'TBD'}</span>
                             </div>
                             <span className="text-xs font-bold text-slate-500">Rp {order.total_price.toLocaleString()}</span>
                           </div>
@@ -303,7 +304,7 @@ export default function RestaurantDashboard() {
                             {order.restaurant_order_details?.map((detail: any) => (
                               <p key={detail.id} className="text-xs text-slate-700 font-medium">
                                 {detail.quantity}x {detail.restaurant_menus?.name}
-                                {detail.notes && <span className="block text-[9px] text-amber-600 italic">Notes: {detail.notes}</span>}
+                                {detail.notes && <span className="block text-[9px] text-amber-600 italic">Catatan: {detail.notes}</span>}
                               </p>
                             ))}
                           </div>
@@ -313,7 +314,7 @@ export default function RestaurantDashboard() {
                             className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all shadow-sm hover:shadow-md"
                           >
                             <Check className="w-3.5 h-3.5" />
-                            Mark Delivered
+                            Tandai Sudah Diantar
                           </button>
                         </div>
                       ))}
@@ -326,7 +327,7 @@ export default function RestaurantDashboard() {
                   <div className="flex justify-between items-center pb-3 border-b border-slate-50">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
-                      <h3 className="font-bold text-slate-800">Delivered Today</h3>
+                      <h3 className="font-bold text-slate-800">Diantarkan Hari Ini</h3>
                     </div>
                     <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-0.5 rounded-full">{deliveredOrders.length}</span>
                   </div>
@@ -334,14 +335,14 @@ export default function RestaurantDashboard() {
                   {deliveredOrders.length === 0 ? (
                     <div className="text-center py-10">
                       <CheckCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                      <p className="text-xs text-slate-400 font-medium">No orders delivered today.</p>
+                      <p className="text-xs text-slate-400 font-medium">Belum ada pesanan yang diantarkan hari ini.</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
                       {deliveredOrders.map((order: any) => (
                         <div key={order.id} className="p-4 border border-slate-100 bg-slate-50/30 rounded-2xl space-y-2 opacity-75">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-slate-600">Room {order.rooms?.room_number || 'TBD'}</span>
+                            <span className="text-sm font-bold text-slate-600">Kamar {order.rooms?.room_number || 'TBD'}</span>
                             <span className="text-xs text-slate-400">Rp {order.total_price.toLocaleString()}</span>
                           </div>
                           <div className="border-t border-slate-100/50 pt-2 space-y-1">
@@ -353,7 +354,7 @@ export default function RestaurantDashboard() {
                           </div>
                           <div className="flex items-center gap-1 mt-2">
                             <Check className="w-3 h-3 text-emerald-500" />
-                            <span className="text-[9px] font-semibold text-emerald-500">Completed</span>
+                            <span className="text-[9px] font-semibold text-emerald-500">Selesai</span>
                           </div>
                         </div>
                       ))}

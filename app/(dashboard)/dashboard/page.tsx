@@ -34,7 +34,7 @@ export default function UserDashboard() {
 
         if (userError) {
           console.error('User fetch error:', userError)
-          setError('Failed to load user data')
+          setError('Gagal memuat data pengguna')
           setLoading(false)
           return
         }
@@ -56,7 +56,7 @@ export default function UserDashboard() {
         setLoading(false)
       } catch (err: any) {
         console.error('Unexpected error:', err)
-        setError(err.message || 'An unexpected error occurred')
+        setError(err.message || 'Terjadi kesalahan yang tidak terduga')
         setLoading(false)
       }
     }
@@ -74,7 +74,7 @@ export default function UserDashboard() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <p className="text-gray-600">Memuat dashboard...</p>
         </div>
       </div>
     )
@@ -88,7 +88,7 @@ export default function UserDashboard() {
             <div className="text-red-500 mb-4">⚠️ Error</div>
             <p className="text-gray-600 mb-4">{error}</p>
             <Button onClick={() => router.push('/login')}>
-              Back to Login
+              Kembali ke Login
             </Button>
           </CardContent>
         </Card>
@@ -116,7 +116,7 @@ export default function UserDashboard() {
 
       {/* Main */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold mb-8">My Dashboard</h2>
+        <h2 className="text-3xl font-bold mb-8">Dashboard Saya</h2>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -126,7 +126,7 @@ export default function UserDashboard() {
                 <Calendar className="w-10 h-10 text-blue-600" />
                 <div>
                   <p className="text-2xl font-bold">{bookings.length}</p>
-                  <p className="text-gray-600">Total Bookings</p>
+                  <p className="text-gray-600">Total Pemesanan</p>
                 </div>
               </div>
             </CardContent>
@@ -139,7 +139,7 @@ export default function UserDashboard() {
                   <p className="text-2xl font-bold">
                     {bookings.filter(b => b.status === 'confirmed').length}
                   </p>
-                  <p className="text-gray-600">Confirmed</p>
+                  <p className="text-gray-600">Dikonfirmasi</p>
                 </div>
               </div>
             </CardContent>
@@ -152,7 +152,7 @@ export default function UserDashboard() {
                   <p className="text-2xl font-bold">
                     {bookings.filter(b => b.status === 'pending').length}
                   </p>
-                  <p className="text-gray-600">Pending</p>
+                  <p className="text-gray-600">Tertunda</p>
                 </div>
               </div>
             </CardContent>
@@ -162,7 +162,7 @@ export default function UserDashboard() {
         {/* Recent Bookings */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Bookings</CardTitle>
+            <CardTitle>Pemesanan Terbaru</CardTitle>
           </CardHeader>
           <CardContent>
             {bookings.length > 0 ? (
@@ -172,7 +172,7 @@ export default function UserDashboard() {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-semibold text-lg">
-                          Room {booking.rooms?.room_number}
+                          Kamar {booking.rooms?.room_number}
                         </h3>
                         <p className="text-gray-600">{booking.rooms?.room_types?.name}</p>
                         <p className="text-sm text-gray-500 mt-2">
@@ -185,7 +185,7 @@ export default function UserDashboard() {
                           booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                          {booking.status.toUpperCase()}
+                          {booking.status === 'confirmed' ? 'DIKONFIRMASI' : booking.status === 'pending' ? 'TERTUNDA' : booking.status.toUpperCase()}
                         </span>
                         <p className="text-lg font-bold text-blue-600 mt-2">
                           Rp {Number(booking.total_price).toLocaleString()}
@@ -196,7 +196,7 @@ export default function UserDashboard() {
                             className="mt-2"
                             onClick={() => router.push(`/booking/payment?bookingId=${booking.id}`)}
                           >
-                            Pay Now
+                            Bayar Sekarang
                           </Button>
                         )}
                       </div>
@@ -206,10 +206,10 @@ export default function UserDashboard() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-600 mb-4">You don't have any bookings yet</p>
+                <p className="text-gray-600 mb-4">Anda belum memiliki pemesanan apa pun</p>
                 <Button onClick={() => router.push('/')}>
                   <Home className="w-4 h-4 mr-2" />
-                  Browse Rooms
+                  Cari Kamar
                 </Button>
               </div>
             )}

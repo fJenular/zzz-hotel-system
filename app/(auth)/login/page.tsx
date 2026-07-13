@@ -130,14 +130,14 @@ function LoginForm() {
 
   return (
     <AuthShell
-      title="Welcome back"
-      description="Sign in to continue managing stays, bookings, and hotel operations."
+      title="Selamat Datang Kembali"
+      description="Masuk untuk mengelola reservasi, pemesanan, dan layanan hotel Anda."
       icon={LogIn}
       footer={
         <>
-          Don&apos;t have an account?{' '}
+          Belum punya akun?{' '}
           <Link href="/register" className={authLinkClass}>
-            Create an account
+            Daftar sekarang
           </Link>
         </>
       }
@@ -153,7 +153,7 @@ function LoginForm() {
         {/* Email */}
         <div className="space-y-2">
           <label htmlFor="email" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            Email Address
+            Alamat Email
           </label>
           <div className="relative">
             <Mail className={authIconClass} />
@@ -174,7 +174,7 @@ function LoginForm() {
         {/* Password */}
         <div className="space-y-2">
           <label htmlFor="password" className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            Password
+            Kata Sandi
           </label>
           <div className="relative">
             <Lock className={authIconClass} />
@@ -193,7 +193,7 @@ function LoginForm() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-red-500 p-1"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -203,7 +203,7 @@ function LoginForm() {
               href="/forgot-password"
               className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors underline-offset-4 hover:underline"
             >
-              Forgot password?
+              Lupa kata sandi?
             </Link>
           </div>
         </div>
@@ -227,10 +227,10 @@ function LoginForm() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
+              Sedang masuk...
             </>
           ) : (
-            'Get Started'
+            'Masuk'
           )}
         </Button>
 
@@ -240,7 +240,7 @@ function LoginForm() {
             <div className="w-full border-t border-slate-100"></div>
           </div>
           <div className="relative flex justify-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-            <span className="bg-white/80 px-3 backdrop-blur-sm">Or sign in with</span>
+            <span className="bg-white/80 px-3 backdrop-blur-sm">Atau masuk dengan</span>
           </div>
         </div>
 
@@ -271,13 +271,13 @@ function LoginForm() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            <p className='ml-2'>Login with Google</p>
+            <p className='ml-2'>Masuk dengan Google</p>
           </button>
         </div>
 
         {/* Demo credentials */}
         <div className="mt-4 w-full rounded-2xl border border-red-100 bg-red-50/50 p-4 text-xs text-slate-500">
-          <p className="mb-2 font-mono font-bold text-red-600 uppercase tracking-wider text-[10px]">Demo Credentials</p>
+          <p className="mb-2 font-mono font-bold text-red-600 uppercase tracking-wider text-[10px]">Akun Demo</p>
           <div className="space-y-1 font-mono text-[11px]">
             <p><span className="font-semibold text-slate-700">Guest:</span> guest@example.com / Guest123!</p>
             <p><span className="font-semibold text-slate-700">Admin:</span> admin@zzzhotel.com / Admin123!</p>
@@ -294,7 +294,7 @@ export default function LoginPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-          <p className="text-slate-500 text-xs font-mono">Loading portal...</p>
+          <p className="text-slate-500 text-xs font-mono">Memuat halaman...</p>
         </div>
       </div>
     }>

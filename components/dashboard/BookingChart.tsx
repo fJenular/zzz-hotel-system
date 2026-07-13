@@ -66,14 +66,14 @@ export default async function BookingChart() {
     <Card className="border border-slate-100 bg-white shadow-sm hover:shadow-md transition-all duration-300 rounded-3xl p-2">
       <CardHeader className="pb-4 flex flex-row items-center justify-between border-b border-slate-50/50">
         <div>
-          <CardTitle className="text-base font-black text-slate-800 tracking-tight">Reservation Stats</CardTitle>
-          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Booking analytics</p>
+          <CardTitle className="text-base font-black text-slate-800 tracking-tight">Statistik Reservasi</CardTitle>
+          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Analitik pemesanan</p>
         </div>
         {/* Toggle tabs to match reference image */}
         <div className="flex bg-slate-50 p-1 rounded-xl text-[10px] font-bold text-slate-400">
-          <button className="px-3 py-1.5 rounded-lg hover:text-slate-800 transition">Daily</button>
-          <button className="px-3 py-1.5 rounded-lg hover:text-slate-800 transition">Weekly</button>
-          <button className="px-3 py-1.5 rounded-lg bg-red-500 text-white shadow-sm transition">Monthly</button>
+          <button className="px-3 py-1.5 rounded-lg hover:text-slate-800 transition">Harian</button>
+          <button className="px-3 py-1.5 rounded-lg hover:text-slate-800 transition">Mingguan</button>
+          <button className="px-3 py-1.5 rounded-lg bg-red-500 text-white shadow-sm transition">Bulanan</button>
         </div>
       </CardHeader>
       
@@ -147,7 +147,7 @@ export default async function BookingChart() {
                   r="12" 
                   className="fill-transparent hover:fill-red-500/5 cursor-pointer" 
                 />
-                <title>{`${p.isoDate}: ${p.count} bookings`}</title>
+                <title>{`${p.isoDate}: ${p.count} pemesanan`}</title>
               </g>
             ))}
 

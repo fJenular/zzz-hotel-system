@@ -56,7 +56,7 @@ export default function ContactUsPage() {
     e.preventDefault()
     setSending(true)
     setTimeout(() => {
-      alert('Thank you for reaching out! Our receptionist team will reply to your inquiry shortly.')
+      alert('Terima kasih telah menghubungi kami! Tim resepsionis kami akan segera membalas pertanyaan Anda.')
       setContactData(prev => ({ ...prev, subject: '', message: '' }))
       setSending(false)
     }, 1500)
@@ -77,31 +77,30 @@ export default function ContactUsPage() {
           <nav className="space-y-1">
             <Link href="/" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <Home className="w-5 h-5" />
-              <span>Home</span>
+              <span>Beranda</span>
             </Link>
             <Link href="/booking/select-room" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <Compass className="w-5 h-5" />
-              <span>Discover</span>
+              <span>Cari Kamar</span>
             </Link>
             <Link href="/facilities" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <Sparkles className="w-5 h-5" />
-              <span>Facilities</span>
+              <span>Fasilitas</span>
             </Link>
             <Link href="/contact-us" className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-500 bg-rose-50/60 rounded-xl transition-all duration-200">
               <MessageSquare className="w-5 h-5 text-rose-500" />
-              <span>contact us</span>
+              <span>Hubungi Kami</span>
             </Link>
             <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <User className="w-5 h-5" />
-              <span>About</span>
+              <span>Tentang Kami</span>
             </Link>
           </nav>
         </div>
 
-        {/* Bottom Sidebar */}
         <div className="space-y-4">
           <hr className="border-gray-100" />
-          <p className="text-xs font-semibold text-gray-400 px-4 uppercase tracking-wider">Other</p>
+          <p className="text-xs font-semibold text-gray-400 px-4 uppercase tracking-wider">Lainnya</p>
           <nav className="space-y-1">
             {user && user.role !== 'guest' && (
               <Link 
@@ -120,7 +119,7 @@ export default function ContactUsPage() {
             )}
             <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
               <HelpCircle className="w-5 h-5" />
-              <span>Help & Support</span>
+              <span>Bantuan & Dukungan</span>
             </Link>
             {user ? (
               <button 
@@ -128,12 +127,12 @@ export default function ContactUsPage() {
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200"
               >
                 <LogOut className="w-5 h-5" />
-                <span>Log Out</span>
+                <span>Keluar</span>
               </button>
             ) : (
               <Link href="/login" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">
                 <User className="w-5 h-5" />
-                <span>Log In</span>
+                <span>Masuk</span>
               </Link>
             )}
           </nav>
@@ -148,80 +147,61 @@ export default function ContactUsPage() {
           {/* Header Greeting */}
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div className="animate-fade-in">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">contact us</h1>
-              <p className="text-sm text-gray-500 mt-1">Get in touch with us. We are happy to help with your booking inquiries.</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Hubungi Kami</h1>
+              <p className="text-sm text-gray-500 mt-1">Hubungi kami. Kami dengan senang hati akan membantu pertanyaan reservasi Anda.</p>
             </div>
             
-            {/* Top Toolbar */}
-            <div className="flex items-center gap-4">
-              <button className="p-2.5 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition relative">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
-              </button>
-              {user ? (
-                <div className="w-10 h-10 rounded-full bg-rose-100 overflow-hidden relative border-2 border-white shadow-md">
-                  <Image src="https://i.pravatar.cc/100" alt="Avatar" fill />
-                </div>
-              ) : (
-                <Link 
-                  href="/login"
-                  className="px-4 py-2 text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition shadow-sm shadow-rose-200"
-                >
-                  Log In
-                </Link>
-              )}
-            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start animate-slide-up">
             
             {/* Left Box: Form */}
             <div className="bg-white border border-gray-100 p-8 rounded-3xl shadow-sm space-y-6">
-              <h2 className="text-xl font-bold text-gray-900">Send a Message</h2>
+              <h2 className="text-xl font-bold text-gray-900">Kirim Pesan</h2>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Your Name</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Nama Anda</label>
                   <input 
                     type="text" 
                     value={contactData.name}
                     onChange={(e) => setContactData({...contactData, name: e.target.value})}
-                    placeholder="Enter name"
+                    placeholder="Masukkan nama"
                     className="w-full px-3 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl text-xs font-semibold text-gray-800 placeholder-gray-400 focus:border-rose-500 focus:ring-0 focus:bg-white transition"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Email Address</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Alamat Email</label>
                   <input 
                     type="email" 
                     value={contactData.email}
                     onChange={(e) => setContactData({...contactData, email: e.target.value})}
-                    placeholder="Enter email"
+                    placeholder="Masukkan email"
                     className="w-full px-3 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl text-xs font-semibold text-gray-800 placeholder-gray-400 focus:border-rose-500 focus:ring-0 focus:bg-white transition"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Subject</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Subjek</label>
                   <input 
                     type="text" 
                     value={contactData.subject}
                     onChange={(e) => setContactData({...contactData, subject: e.target.value})}
-                    placeholder="Subject title"
+                    placeholder="Judul subjek"
                     className="w-full px-3 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl text-xs font-semibold text-gray-800 placeholder-gray-400 focus:border-rose-500 focus:ring-0 focus:bg-white transition"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Message</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Pesan</label>
                   <textarea 
                     value={contactData.message}
                     onChange={(e) => setContactData({...contactData, message: e.target.value})}
-                    placeholder="Write details..."
+                    placeholder="Tulis detail..."
                     rows={4}
                     className="w-full px-3 py-2.5 bg-gray-50/50 border border-gray-100 rounded-xl text-xs font-semibold text-gray-800 placeholder-gray-400 focus:border-rose-500 focus:ring-0 focus:bg-white transition"
                     required
@@ -234,7 +214,7 @@ export default function ContactUsPage() {
                   className="w-full py-3.5 bg-rose-500 hover:bg-rose-600 disabled:bg-rose-400 text-white font-bold rounded-2xl transition shadow-lg shadow-rose-200 text-sm flex items-center justify-center gap-2"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{sending ? 'Sending...' : 'Send Message'}</span>
+                  <span>{sending ? 'Mengirim...' : 'Kirim Pesan'}</span>
                 </button>
               </form>
             </div>
@@ -256,14 +236,14 @@ export default function ContactUsPage() {
 
               {/* Direct Info list */}
               <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm space-y-4">
-                <h3 className="font-bold text-gray-900 text-sm">ZZZ Hotel Contacts</h3>
+                <h3 className="font-bold text-gray-900 text-sm">Kontak ZZZ Hotel</h3>
                 
                 <div className="flex items-center gap-3 p-3 bg-gray-50/50 rounded-xl border border-gray-50">
                   <span className="p-2 bg-rose-50 text-rose-500 rounded-lg">
                     <Phone className="w-4 h-4" />
                   </span>
                   <div>
-                    <span className="block text-[8px] uppercase tracking-wider text-gray-400">Receptionist Hotline</span>
+                    <span className="block text-[8px] uppercase tracking-wider text-gray-400">Hotline Resepsionis</span>
                     <span className="text-xs font-bold text-gray-700">+62 21 5550 1234</span>
                   </div>
                 </div>
@@ -273,7 +253,7 @@ export default function ContactUsPage() {
                     <Mail className="w-4 h-4" />
                   </span>
                   <div>
-                    <span className="block text-[8px] uppercase tracking-wider text-gray-400">Inquiry Email</span>
+                    <span className="block text-[8px] uppercase tracking-wider text-gray-400">Email Pertanyaan</span>
                     <span className="text-xs font-bold text-gray-700">support@zzzhotel.com</span>
                   </div>
                 </div>
@@ -283,7 +263,7 @@ export default function ContactUsPage() {
                     <MapPin className="w-4 h-4" />
                   </span>
                   <div>
-                    <span className="block text-[8px] uppercase tracking-wider text-gray-400">Office Location</span>
+                    <span className="block text-[8px] uppercase tracking-wider text-gray-400">Lokasi Kantor</span>
                     <span className="text-xs font-bold text-gray-700">Jl. Sudirman No. 123, Jakarta Pusat</span>
                   </div>
                 </div>
@@ -295,18 +275,18 @@ export default function ContactUsPage() {
 
         {/* RIGHT COLUMN: Help support summary */}
         <aside className="w-full lg:w-96 bg-white border-l border-gray-100 p-6 overflow-y-auto shrink-0 space-y-6">
-          <h3 className="text-lg font-bold text-gray-900 border-b border-gray-50 pb-3">Support Info</h3>
+          <h3 className="text-lg font-bold text-gray-900 border-b border-gray-50 pb-3">Info Dukungan</h3>
           
           <div className="space-y-4">
-            <h4 className="font-bold text-sm text-gray-800">Frequently Asked Questions</h4>
+            <h4 className="font-bold text-sm text-gray-800">Pertanyaan yang Sering Diajukan</h4>
             <div className="space-y-2 text-xs">
               <div className="p-3 bg-gray-50 rounded-xl">
-                <h5 className="font-bold text-gray-700 mb-1">Check-in and Check-out times?</h5>
-                <p className="text-gray-500 leading-normal">Check-in time is from 02:00 PM and check-out is by 12:00 PM noon.</p>
+                <h5 className="font-bold text-gray-700 mb-1">Waktu Check-in dan Check-out?</h5>
+                <p className="text-gray-500 leading-normal">Waktu Check-in mulai dari jam 14:00 dan Check-out maksimal jam 12:00 siang.</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-xl">
-                <h5 className="font-bold text-gray-700 mb-1">Are extra services refundable?</h5>
-                <p className="text-gray-500 leading-normal">Services like Cleaning or Buffet breakfast can be cancelled up to 24 hours prior without fee.</p>
+                <h5 className="font-bold text-gray-700 mb-1">Apakah layanan tambahan dapat dibatalkan?</h5>
+                <p className="text-gray-500 leading-normal">Layanan seperti Pembersihan atau Sarapan Prasmanan dapat dibatalkan hingga 24 jam sebelumnya tanpa biaya.</p>
               </div>
             </div>
           </div>

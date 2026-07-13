@@ -55,6 +55,31 @@ try {
     })
   }
 
+  // 3. Query room types and rooms
+  console.log('\n🏠 Checking Room Types and Rooms in Database...')
+  const { data: dbRoomTypes, error: rtError } = await supabase.from('room_types').select('*')
+  if (rtError) {
+    console.error('❌ Failed to fetch room types:', rtError.message)
+  } else {
+    console.log(`✅ Room Types (${dbRoomTypes.length}):`)
+    if (dbRoomTypes.length > 0) {
+      console.log('Room Type Keys:', Object.keys(dbRoomTypes[0]))
+    }
+    dbRoomTypes.forEach((rt) => {
+      console.log(`   - ID: ${rt.id} | Name: "${rt.name}" | Price: Rp ${rt.base_price} | Max Occupancy: ${rt.max_occupancy} (Adults: ${rt.max_adults}, Children: ${rt.max_children})`)
+    })
+  }
+
+  const { data: dbRooms, error: rError } = await supabase.from('rooms').select('*, room_types(name)')
+  if (rError) {
+    console.error('❌ Failed to fetch rooms:', rError.message)
+  } else {
+    console.log(`✅ Rooms (${dbRooms.length}):`)
+    dbRooms.forEach((r) => {
+      console.log(`   - Room: ${r.room_number} | Floor: ${r.floor} | Status: ${r.status} | Type: "${r.room_types?.name}"`)
+    })
+  }
+
 } catch (err) {
   console.error('❌ Unexpected error:', err.message)
   process.exit(1)

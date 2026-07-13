@@ -22,7 +22,15 @@ export default function AdminRoomTypesPage() {
     name: '',
     description: '',
     base_price: 0,
-    max_occupancy: 2
+    max_occupancy: 2,
+    max_adults: 2,
+    max_children: 1,
+    bed_configuration: '',
+    area_sqm: 0,
+    view_type: '',
+    room_size: '',
+    facilities: '',
+    amenities: ''
   })
 
   // Edit State
@@ -31,7 +39,15 @@ export default function AdminRoomTypesPage() {
     name: '',
     description: '',
     base_price: 0,
-    max_occupancy: 2
+    max_occupancy: 2,
+    max_adults: 2,
+    max_children: 1,
+    bed_configuration: '',
+    area_sqm: 0,
+    view_type: '',
+    room_size: '',
+    facilities: '',
+    amenities: ''
   })
 
   useEffect(() => {
@@ -81,13 +97,28 @@ export default function AdminRoomTypesPage() {
     }
 
     try {
+      const parsedFacilities = newForm.facilities
+        ? newForm.facilities.split(',').map(f => f.trim()).filter(Boolean)
+        : []
+      const parsedAmenities = newForm.amenities
+        ? newForm.amenities.split(',').map(a => a.trim()).filter(Boolean)
+        : []
+
       const { error } = await supabase
         .from('room_types')
         .insert({
           name: newForm.name,
           description: newForm.description,
           base_price: Number(newForm.base_price),
-          max_occupancy: Number(newForm.max_occupancy)
+          max_occupancy: Number(newForm.max_occupancy),
+          max_adults: Number(newForm.max_adults),
+          max_children: Number(newForm.max_children),
+          bed_configuration: newForm.bed_configuration,
+          area_sqm: Number(newForm.area_sqm),
+          view_type: newForm.view_type,
+          room_size: newForm.room_size,
+          facilities: parsedFacilities,
+          amenities: parsedAmenities
         })
 
       if (error) throw error
@@ -98,33 +129,69 @@ export default function AdminRoomTypesPage() {
         name: '',
         description: '',
         base_price: 0,
-        max_occupancy: 2
+        max_occupancy: 2,
+        max_adults: 2,
+        max_children: 1,
+        bed_configuration: '',
+        area_sqm: 0,
+        view_type: '',
+        room_size: '',
+        facilities: '',
+        amenities: ''
       })
       fetchRoomTypes()
     } catch (err: any) {
-      alert(err.message || 'Failed to create room type')
+      console.error(err)
+      if (err.message?.includes('column') || err.message?.includes('schema cache')) {
+        alert('Gagal membuat tipe kamar. Tampaknya Anda belum menjalankan migrasi database. Silakan jalankan file SQL `scripts/migration-add-room-fields.sql` di Supabase SQL Editor terlebih dahulu.\n\nDetail: ' + err.message)
+      } else {
+        alert(err.message || 'Failed to create room type')
+      }
     }
   }
 
   const handleStartEdit = (type: any) => {
     setEditingTypeId(type.id)
     setEditForm({
-      name: type.name,
-      description: type.description,
-      base_price: type.base_price,
-      max_occupancy: type.max_occupancy
+      name: type.name || '',
+      description: type.description || '',
+      base_price: type.base_price || 0,
+      max_occupancy: type.max_occupancy || 2,
+      max_adults: type.max_adults || 2,
+      max_children: type.max_children || 1,
+      bed_configuration: type.bed_configuration || '',
+      area_sqm: type.area_sqm || 0,
+      view_type: type.view_type || '',
+      room_size: type.room_size || '',
+      facilities: Array.isArray(type.facilities) ? type.facilities.join(', ') : '',
+      amenities: Array.isArray(type.amenities) ? type.amenities.join(', ') : ''
     })
   }
 
   const handleSaveEdit = async (typeId: string) => {
     try {
+      const parsedFacilities = editForm.facilities
+        ? editForm.facilities.split(',').map(f => f.trim()).filter(Boolean)
+        : []
+      const parsedAmenities = editForm.amenities
+        ? editForm.amenities.split(',').map(a => a.trim()).filter(Boolean)
+        : []
+
       const { error } = await supabase
         .from('room_types')
         .update({
           name: editForm.name,
           description: editForm.description,
           base_price: Number(editForm.base_price),
-          max_occupancy: Number(editForm.max_occupancy)
+          max_occupancy: Number(editForm.max_occupancy),
+          max_adults: Number(editForm.max_adults),
+          max_children: Number(editForm.max_children),
+          bed_configuration: editForm.bed_configuration,
+          area_sqm: Number(editForm.area_sqm),
+          view_type: editForm.view_type,
+          room_size: editForm.room_size,
+          facilities: parsedFacilities,
+          amenities: parsedAmenities
         })
         .eq('id', typeId)
 
@@ -133,7 +200,12 @@ export default function AdminRoomTypesPage() {
       setEditingTypeId(null)
       fetchRoomTypes()
     } catch (err: any) {
-      alert(err.message || 'Failed to update room type')
+      console.error(err)
+      if (err.message?.includes('column') || err.message?.includes('schema cache')) {
+        alert('Gagal memperbarui tipe kamar. Silakan jalankan file SQL `scripts/migration-add-room-fields.sql` di Supabase SQL Editor terlebih dahulu.\n\nDetail: ' + err.message)
+      } else {
+        alert(err.message || 'Failed to update room type')
+      }
     }
   }
 
@@ -235,46 +307,64 @@ export default function AdminRoomTypesPage() {
             </button>
           </div>
 
-          {/* Add Form */}
-          {showAddForm && (
+          {/* Add/Edit Form */}
+          {(showAddForm || editingTypeId) && (
             <div className="bg-white border border-slate-100 p-8 rounded-[28px] shadow-sm animate-scale-up space-y-6">
-              <div>
-                <h3 className="text-base font-black text-slate-800 tracking-tight">Add New Room Type</h3>
-                <p className="text-[10px] text-slate-405 mt-0.5">Create a room type tier</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-base font-black text-slate-800 tracking-tight">
+                    {editingTypeId ? 'Edit Room Type' : 'Add New Room Type'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {editingTypeId ? 'Modify room type configuration' : 'Create a room type tier'}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowAddForm(false)
+                    setEditingTypeId(null)
+                  }}
+                  className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-xl transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
               
-              <form onSubmit={handleCreateRoomType} className="grid grid-cols-1 md:grid-cols-4 gap-5">
+              <form onSubmit={editingTypeId ? (e) => { e.preventDefault(); handleSaveEdit(editingTypeId); } : handleCreateRoomType} className="grid grid-cols-1 md:grid-cols-4 gap-5">
                 
+                {/* Room Type Name */}
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Room Type Name</label>
                   <div className="relative">
                     <Award className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
-                      placeholder="e.g. Grand Presidential Suite"
-                      value={newForm.name}
-                      onChange={(e) => setNewForm({ ...newForm, name: e.target.value })}
-                      className="w-full border border-slate-250 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                      placeholder="e.g. Nusa Indah (Standard Room)"
+                      value={editingTypeId ? editForm.name : newForm.name}
+                      onChange={(e) => editingTypeId ? setEditForm({ ...editForm, name: e.target.value }) : setNewForm({ ...newForm, name: e.target.value })}
+                      className="w-full border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
                       required
                     />
                   </div>
                 </div>
 
+                {/* Base Price */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Base Price / Night</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Base Price / Night (Rp)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="number"
-                      placeholder="850000"
-                      value={newForm.base_price || ''}
-                      onChange={(e) => setNewForm({ ...newForm, base_price: Number(e.target.value) })}
-                      className="w-full border border-slate-250 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                      placeholder="500000"
+                      value={editingTypeId ? editForm.base_price || '' : newForm.base_price || ''}
+                      onChange={(e) => editingTypeId ? setEditForm({ ...editForm, base_price: Number(e.target.value) }) : setNewForm({ ...newForm, base_price: Number(e.target.value) })}
+                      className="w-full border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
                       required
                     />
                   </div>
                 </div>
 
+                {/* Max Occupancy */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Max Occupancy</label>
                   <div className="relative">
@@ -282,35 +372,139 @@ export default function AdminRoomTypesPage() {
                     <input
                       type="number"
                       placeholder="2"
-                      value={newForm.max_occupancy || ''}
-                      onChange={(e) => setNewForm({ ...newForm, max_occupancy: Number(e.target.value) })}
-                      className="w-full border border-slate-250 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                      value={editingTypeId ? editForm.max_occupancy || '' : newForm.max_occupancy || ''}
+                      onChange={(e) => editingTypeId ? setEditForm({ ...editForm, max_occupancy: Number(e.target.value) }) : setNewForm({ ...newForm, max_occupancy: Number(e.target.value) })}
+                      className="w-full border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
                       required
                       min="1"
                     />
                   </div>
                 </div>
 
+                {/* Max Adults */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Max Adults</label>
+                  <input
+                    type="number"
+                    placeholder="2"
+                    value={editingTypeId ? editForm.max_adults || '' : newForm.max_adults || ''}
+                    onChange={(e) => editingTypeId ? setEditForm({ ...editForm, max_adults: Number(e.target.value) }) : setNewForm({ ...newForm, max_adults: Number(e.target.value) })}
+                    className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                    required
+                    min="1"
+                  />
+                </div>
+
+                {/* Max Children */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Max Children</label>
+                  <input
+                    type="number"
+                    placeholder="1"
+                    value={editingTypeId ? editForm.max_children || '' : newForm.max_children || ''}
+                    onChange={(e) => editingTypeId ? setEditForm({ ...editForm, max_children: Number(e.target.value) }) : setNewForm({ ...newForm, max_children: Number(e.target.value) })}
+                    className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                    required
+                    min="0"
+                  />
+                </div>
+
+                {/* Bed Configuration */}
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Bed Configuration</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 1 King Bed atau 2 Single Bed"
+                    value={editingTypeId ? editForm.bed_configuration : newForm.bed_configuration}
+                    onChange={(e) => editingTypeId ? setEditForm({ ...editForm, bed_configuration: e.target.value }) : setNewForm({ ...newForm, bed_configuration: e.target.value })}
+                    className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                  />
+                </div>
+
+                {/* Area Sqm */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Area Size (m²)</label>
+                  <input
+                    type="number"
+                    placeholder="28"
+                    value={editingTypeId ? editForm.area_sqm || '' : newForm.area_sqm || ''}
+                    onChange={(e) => editingTypeId ? setEditForm({ ...editForm, area_sqm: Number(e.target.value) }) : setNewForm({ ...newForm, area_sqm: Number(e.target.value) })}
+                    className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                  />
+                </div>
+
+                {/* View Type */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">View Type</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Kota, Samudra, Taman"
+                    value={editingTypeId ? editForm.view_type : newForm.view_type}
+                    onChange={(e) => editingTypeId ? setEditForm({ ...editForm, view_type: e.target.value }) : setNewForm({ ...newForm, view_type: e.target.value })}
+                    className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                  />
+                </div>
+
+                {/* Room Size */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Room Size Description</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 28 sqm"
+                    value={editingTypeId ? editForm.room_size : newForm.room_size}
+                    onChange={(e) => editingTypeId ? setEditForm({ ...editForm, room_size: e.target.value }) : setNewForm({ ...newForm, room_size: e.target.value })}
+                    className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                  />
+                </div>
+
+                <div className="md:col-span-1"></div>
+
+                {/* Facilities */}
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Facilities (comma separated)</label>
+                  <input
+                    type="text"
+                    placeholder="AC, WiFi Gratis, TV LED 32 inch, Air Panas"
+                    value={editingTypeId ? editForm.facilities : newForm.facilities}
+                    onChange={(e) => editingTypeId ? setEditForm({ ...editForm, facilities: e.target.value }) : setNewForm({ ...newForm, facilities: e.target.value })}
+                    className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                  />
+                </div>
+
+                {/* Amenities */}
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Amenities (comma separated)</label>
+                  <input
+                    type="text"
+                    placeholder="Premium Soap, Slippers, Coffee Maker"
+                    value={editingTypeId ? editForm.amenities : newForm.amenities}
+                    onChange={(e) => editingTypeId ? setEditForm({ ...editForm, amenities: e.target.value }) : setNewForm({ ...newForm, amenities: e.target.value })}
+                    className="w-full border border-slate-200 rounded-2xl px-4 py-2.5 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none font-semibold"
+                  />
+                </div>
+
+                {/* Description */}
                 <div className="space-y-1.5 md:col-span-3">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Description</label>
                   <div className="relative">
                     <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                     <textarea
                       placeholder="Describe room features, view configurations, etc."
-                      value={newForm.description}
-                      onChange={(e) => setNewForm({ ...newForm, description: e.target.value })}
-                      className="w-full border border-slate-250 rounded-2xl pl-10 pr-4 py-3 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none h-20 resize-none font-semibold"
+                      value={editingTypeId ? editForm.description : newForm.description}
+                      onChange={(e) => editingTypeId ? setEditForm({ ...editForm, description: e.target.value }) : setNewForm({ ...newForm, description: e.target.value })}
+                      className="w-full border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs bg-white text-slate-800 focus:border-red-400 focus:outline-none h-20 resize-none font-semibold"
                       required
                     />
                   </div>
                 </div>
 
+                {/* Save Button */}
                 <div className="flex items-end justify-end md:col-span-1">
                   <button
                     type="submit"
-                    className="w-full py-3 bg-red-650 hover:bg-red-700 text-white font-bold rounded-2xl text-xs tracking-wider uppercase shadow-md transition cursor-pointer"
+                    className="w-full py-3 bg-red-650 hover:bg-red-700 text-white font-bold rounded-2xl text-xs tracking-wider uppercase shadow-md transition cursor-pointer bg-red-600"
                   >
-                    Save Type
+                    {editingTypeId ? 'Update Type' : 'Save Type'}
                   </button>
                 </div>
               </form>
@@ -330,6 +524,7 @@ export default function AdminRoomTypesPage() {
                       <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Description</th>
                       <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Base Price</th>
                       <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Occupancy</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Facilities</th>
                       <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest">Actions</th>
                     </tr>
                   </thead>
@@ -339,98 +534,55 @@ export default function AdminRoomTypesPage() {
                         
                         {/* Type Name */}
                         <td className="px-6 py-4 font-bold text-slate-800 text-xs">
-                          {editingTypeId === type.id ? (
-                            <input 
-                              type="text"
-                              value={editForm.name}
-                              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-red-300 bg-white"
-                              required
-                            />
-                          ) : (
-                            type.name
-                          )}
+                          {type.name}
                         </td>
                         
                         {/* Description */}
                         <td className="px-6 py-4 text-xs text-slate-500 max-w-[250px] truncate font-medium">
-                          {editingTypeId === type.id ? (
-                            <textarea 
-                              value={editForm.description}
-                              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-red-300 bg-white w-full h-12"
-                              required
-                            />
-                          ) : (
-                            type.description
-                          )}
+                          {type.description}
                         </td>
                         
                         {/* Base Price */}
                         <td className="px-6 py-4 font-black text-slate-800 text-xs">
-                          {editingTypeId === type.id ? (
-                            <input 
-                              type="number"
-                              value={editForm.base_price}
-                              onChange={(e) => setEditForm({ ...editForm, base_price: Number(e.target.value) })}
-                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-red-300 bg-white w-24"
-                              required
-                            />
-                          ) : (
-                            `Rp ${Number(type.base_price).toLocaleString()}`
-                          )}
+                          Rp {Number(type.base_price).toLocaleString()}
                         </td>
                         
                         {/* Max Occupancy */}
                         <td className="px-6 py-4 text-xs font-bold text-slate-700">
-                          {editingTypeId === type.id ? (
-                            <input 
-                              type="number"
-                              value={editForm.max_occupancy}
-                              onChange={(e) => setEditForm({ ...editForm, max_occupancy: Number(e.target.value) })}
-                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-red-300 bg-white w-16"
-                              required
-                            />
-                          ) : (
-                            `${type.max_occupancy} Pax`
+                          {type.max_occupancy} Pax
+                          {type.max_adults !== undefined && (
+                            <span className="block text-[10px] text-slate-400 font-normal">
+                              ({type.max_adults} D, {type.max_children || 0} A)
+                            </span>
                           )}
+                        </td>
+
+                        {/* Facilities */}
+                        <td className="px-6 py-4 text-[11px] text-slate-500 max-w-[200px] truncate font-medium">
+                          {Array.isArray(type.facilities) ? type.facilities.join(', ') : '-'}
                         </td>
                         
                         {/* Actions */}
                         <td className="px-6 py-4 text-right">
-                          {editingTypeId === type.id ? (
-                            <div className="flex gap-2 justify-end">
-                              <button
-                                onClick={() => handleSaveEdit(type.id)}
-                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition cursor-pointer"
-                              >
-                                <Save className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setEditingTypeId(null)}
-                                className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition cursor-pointer"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex gap-2 justify-end">
-                              <button
-                                onClick={() => handleStartEdit(type)}
-                                className="p-1.5 text-slate-400 hover:bg-slate-50 rounded-lg transition cursor-pointer"
-                                title="Edit Room Type"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteRoomType(type.id)}
-                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer"
-                                title="Delete Room Type"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => {
+                                handleStartEdit(type)
+                                setShowAddForm(false)
+                              }}
+                              className="p-1.5 text-slate-400 hover:bg-slate-50 rounded-lg transition cursor-pointer"
+                              title="Edit Room Type"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRoomType(type.id)}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer"
+                              title="Delete Room Type"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

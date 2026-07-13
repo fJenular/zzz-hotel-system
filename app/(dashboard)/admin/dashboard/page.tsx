@@ -117,7 +117,7 @@ export default async function AdminDashboard() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="Search..." 
+                placeholder="Cari..." 
                 className="pl-9 pr-4 py-2 w-full border border-slate-100 bg-slate-50/50 rounded-2xl text-xs focus:outline-none focus:border-red-300 transition-colors"
               />
             </div>
@@ -144,7 +144,7 @@ export default async function AdminDashboard() {
               </div>
               <div className="hidden lg:block text-left">
                 <p className="text-xs font-black text-slate-800 leading-none">{userData?.full_name || 'Administrator'}</p>
-                <p className="text-[10px] text-slate-400 font-semibold mt-1 leading-none">Hotel Admin</p>
+                <p className="text-[10px] text-slate-400 font-semibold mt-1 leading-none">Admin Hotel</p>
               </div>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default async function AdminDashboard() {
                 <LayoutDashboard className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Bookings</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Pemesanan</p>
                 <p className="text-2xl font-black text-slate-800 mt-0.5">{totalBookings || 0}</p>
               </div>
             </div>
@@ -173,7 +173,7 @@ export default async function AdminDashboard() {
                 <DoorOpen className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Occupancy Rate</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tingkat Hunian</p>
                 <p className="text-2xl font-black text-slate-800 mt-0.5">{occupancyRate.toFixed(1)}%</p>
               </div>
             </div>
@@ -184,7 +184,7 @@ export default async function AdminDashboard() {
                 <CreditCard className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Revenue</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Pendapatan</p>
                 <p className="text-base font-black text-slate-800 mt-1">Rp {totalRevenue.toLocaleString()}</p>
               </div>
             </div>
@@ -195,7 +195,7 @@ export default async function AdminDashboard() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Available Rooms</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kamar Tersedia</p>
                 <p className="text-2xl font-black text-slate-800 mt-0.5">{availableRoomsCount}</p>
               </div>
             </div>
@@ -211,8 +211,8 @@ export default async function AdminDashboard() {
               <div className="bg-white border border-slate-100 rounded-[28px] p-6 shadow-sm">
                 <div className="flex items-center justify-between pb-4 border-b border-slate-50">
                   <div>
-                    <h2 className="text-base font-black text-slate-800 tracking-tight">Recent Booking Schedule</h2>
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Timeline overview</p>
+                    <h2 className="text-base font-black text-slate-800 tracking-tight">Jadwal Pemesanan Terbaru</h2>
+                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Ringkasan Waktu</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-bold text-slate-700">{monthLabel}</span>
@@ -230,7 +230,7 @@ export default async function AdminDashboard() {
                 <div className="pt-6">
                   {/* Day Names Row */}
                   <div className="grid grid-cols-7 gap-y-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                    <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    <span>Mg</span><span>Sn</span><span>Sl</span><span>Rb</span><span>Km</span><span>Jm</span><span>Sb</span>
                   </div>
                   
                   {/* Days grid */}
@@ -276,8 +276,8 @@ export default async function AdminDashboard() {
               <div className="bg-white border border-slate-100 rounded-[28px] p-6 shadow-sm">
                 <div className="flex items-center justify-between pb-4 border-b border-slate-50 mb-4">
                   <div>
-                    <h2 className="text-base font-black text-slate-800 tracking-tight">Recent Rooms</h2>
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Live status feed</p>
+                    <h2 className="text-base font-black text-slate-800 tracking-tight">Kamar Terbaru</h2>
+                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Status Langsung</p>
                   </div>
                   <button className="p-1 text-slate-400 hover:text-slate-600 transition" aria-label="More options">
                     <MoreHorizontal className="w-5 h-5" />
@@ -293,7 +293,7 @@ export default async function AdminDashboard() {
                         </div>
                         <div>
                           <p className="text-xs font-bold text-slate-800">{room.room_types?.name}</p>
-                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Floor {room.floor} · Rp {Number(room.room_types?.base_price).toLocaleString()}/night</p>
+                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Lantai {room.floor} · Rp {Number(room.room_types?.base_price).toLocaleString()}/malam</p>
                         </div>
                       </div>
                       

@@ -75,33 +75,33 @@ function PaymentContent() {
               })
               .eq('booking_id', bookingId)
 
-            alert('Payment successful!')
+            alert('Pembayaran berhasil!')
             router.push(`/booking/success?bookingId=${bookingId}`)
           },
           onPending: function (result: any) {
             console.log('Payment pending:', result)
-            alert('Payment is pending. Please complete your payment.')
+            alert('Pembayaran tertunda. Harap selesaikan pembayaran Anda.')
             router.push(`/booking/success?bookingId=${bookingId}&status=pending`)
           },
           onError: function (result: any) {
             console.log('Payment error:', result)
-            alert('Payment failed. Please try again.')
+            alert('Pembayaran gagal. Silakan coba lagi.')
           },
           onClose: function () {
-            alert('You closed the popup without finishing the payment')
+            alert('Anda menutup popup tanpa menyelesaikan pembayaran')
           }
         })
       }
     } catch (error: any) {
       console.error('Error:', error)
-      alert('Payment failed: ' + error.message)
+      alert('Pembayaran gagal: ' + error.message)
     } finally {
       setLoading(false)
     }
   }
 
   if (!booking) {
-    return <div className="max-w-3xl mx-auto px-4 py-16 text-center">Loading...</div>
+    return <div className="max-w-3xl mx-auto px-4 py-16 text-center">Memuat...</div>
   }
 
   return (
@@ -117,20 +117,20 @@ function PaymentContent() {
       />
 
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Payment</h1>
+        <h1 className="text-3xl font-bold mb-8">Pembayaran</h1>
 
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Booking Details</CardTitle>
+              <CardTitle>Detail Pemesanan</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">Room</span>
-                <span className="font-semibold">Room {booking.rooms?.room_number}</span>
+                <span className="text-gray-600">Kamar</span>
+                <span className="font-semibold">Kamar {booking.rooms?.room_number}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Type</span>
+                <span className="text-gray-600">Tipe</span>
                 <span>{booking.rooms?.room_types?.name}</span>
               </div>
               <div className="flex justify-between">
@@ -150,13 +150,13 @@ function PaymentContent() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Payment Methods</CardTitle>
+              <CardTitle>Metode Pembayaran</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 border rounded-lg">
                   <CreditCard className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                  <p className="text-sm">Credit Card</p>
+                  <p className="text-sm">Kartu Kredit</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <QrCode className="w-8 h-8 mx-auto mb-2 text-blue-600" />
@@ -164,7 +164,7 @@ function PaymentContent() {
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <Building className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                  <p className="text-sm">Bank Transfer</p>
+                  <p className="text-sm">Transfer Bank</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <Wallet className="w-8 h-8 mx-auto mb-2 text-blue-600" />
@@ -179,7 +179,7 @@ function PaymentContent() {
             className="w-full text-lg py-6"
             disabled={loading}
           >
-            {loading ? 'Processing...' : `Pay Rp ${Number(booking.total_price).toLocaleString()}`}
+            {loading ? 'Memproses...' : `Bayar Rp ${Number(booking.total_price).toLocaleString()}`}
           </Button>
         </div>
       </div>
@@ -189,7 +189,7 @@ function PaymentContent() {
 
 export default function PaymentPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Memuat...</div>}>
       <PaymentContent />
     </Suspense>
   )
