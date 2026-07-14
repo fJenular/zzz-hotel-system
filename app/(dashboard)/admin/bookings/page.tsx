@@ -71,15 +71,33 @@ export default function AdminBookingsPage() {
       .select(`
         *,
         users (full_name, email),
-        rooms (room_number),
-        room_types (name)
+        rooms (
+          room_number,
+          room_types (name)
+        ),
+        payments (
+          status
+        )
       `)
       .order('created_at', { ascending: false })
 
     if (error) {
       alert(error.message)
     } else {
-      setBookings(data || [])
+      const mappedData = (data || []).map((b: any) => {
+        let pStatus = 'unpaid'
+        if (b.payments && b.payments.length > 0) {
+          const rawStatus = b.payments[0].status
+          if (rawStatus === 'paid') pStatus = 'paid'
+          else if (rawStatus === 'refunded') pStatus = 'refunded'
+          else if (rawStatus === 'failed') pStatus = 'failed'
+        }
+        return {
+          ...b,
+          payment_status: pStatus
+        }
+      })
+      setBookings(mappedData)
     }
     setLoading(false)
   }
@@ -136,13 +154,24 @@ export default function AdminBookingsPage() {
           check_out: newBooking.check_out,
           guests_count: Number(newBooking.guests_count),
           total_price: newBooking.total_price,
-          status: newBooking.status,
-          payment_status: newBooking.payment_status
+          status: newBooking.status
         })
         .select()
         .single()
 
       if (error) throw error
+
+      const dbPaymentStatus = newBooking.payment_status === 'unpaid' ? 'pending' : newBooking.payment_status
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          booking_id: data.id,
+          amount: newBooking.total_price,
+          payment_method: 'manual',
+          status: dbPaymentStatus
+        })
+
+      if (paymentError) throw paymentError
 
       // Update room status to occupied if checked_in
       if (newBooking.status === 'checked_in') {
@@ -186,10 +215,37 @@ export default function AdminBookingsPage() {
 
       const { error } = await supabase
         .from('bookings')
-        .update(editForm)
+        .update({
+          status: editForm.status
+        })
         .eq('id', bookingId)
 
       if (error) throw error
+
+      const { data: existingPayments } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('booking_id', bookingId)
+
+      const dbPaymentStatus = editForm.payment_status === 'unpaid' ? 'pending' : editForm.payment_status
+
+      if (existingPayments && existingPayments.length > 0) {
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .update({ status: dbPaymentStatus })
+          .eq('id', existingPayments[0].id)
+        if (paymentError) throw paymentError
+      } else {
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            booking_id: bookingId,
+            amount: booking.total_price,
+            payment_method: 'manual',
+            status: dbPaymentStatus
+          })
+        if (paymentError) throw paymentError
+      }
 
       // Update room status based on booking status changes
       if (booking) {
@@ -419,7 +475,7 @@ export default function AdminBookingsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-bold text-amber-700">Room {booking.rooms?.room_number || 'N/A'}</div>
-                          <div className="text-[10px] text-gray-400">{booking.room_types?.name}</div>
+                          <div className="text-[10px] text-gray-400">{booking.rooms?.room_types?.name}</div>
                           <div className="text-[10px] text-gray-500 font-semibold mt-0.5">
                             {new Date(booking.check_in).toLocaleDateString()} - {new Date(booking.check_out).toLocaleDateString()}
                           </div>

@@ -9,6 +9,7 @@ import {
   Heart, Search, Droplets, Shield, MoreHorizontal
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function HousekeepingDashboard() {
   const router = useRouter()
@@ -109,11 +110,9 @@ export default function HousekeepingDashboard() {
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-sky-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-lg shadow-sky-500/30">
-              <SprayCan className="w-6 h-6" />
-            </div>
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
             <div>
-              <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">zzz-hotel</span>
+              <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">ZZZ HOTEL</span>
               <span className="text-[10px] font-bold text-sky-500 uppercase tracking-widest block mt-0.5">Housekeeping</span>
             </div>
           </Link>

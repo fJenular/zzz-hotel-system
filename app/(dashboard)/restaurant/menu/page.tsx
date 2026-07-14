@@ -7,6 +7,7 @@ import {
   Home, LogOut, Bell, RefreshCw, Sparkles, User, Utensils, Save, X, Edit
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function RestaurantMenuPage() {
   const router = useRouter()
@@ -109,9 +110,9 @@ export default function RestaurantMenuPage() {
       {/* LEFT SIDEBAR */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
-          <Link href="/" className="flex items-center gap-3 text-xl font-bold text-gray-900 tracking-tight">
-            <span className="p-2 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-200">🏨</span>
-            <span>ZZZ HOTEL</span>
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
+            <span className="text-xl font-bold text-gray-900 tracking-tight">ZZZ HOTEL</span>
           </Link>
 
           <nav className="space-y-1">

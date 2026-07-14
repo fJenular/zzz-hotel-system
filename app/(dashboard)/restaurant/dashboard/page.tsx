@@ -9,6 +9,7 @@ import {
   Heart, Search, Soup, ChefHat, MoreHorizontal
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function RestaurantDashboard() {
   const router = useRouter()
@@ -18,10 +19,13 @@ export default function RestaurantDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+    let channel: any
+
     const checkUser = async () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
-      if (!currentUser) {
-        router.push('/login')
+      if (!isMounted || !currentUser) {
+        if (!currentUser) router.push('/login')
         return
       }
 
@@ -31,14 +35,63 @@ export default function RestaurantDashboard() {
         .eq('id', currentUser.id)
         .single()
 
+      if (!isMounted) return
+
       if (userData?.role !== 'rest_staff' && userData?.role !== 'admin' && userData?.role !== 'super_admin') {
         router.push('/')
         return
       }
       setUser(userData)
       fetchOrders()
+
+      if (!isMounted) return
+
+      // Subscribe to real-time additions of restaurant orders
+      channel = supabase
+        .channel('restaurant-orders-kitchen')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'restaurant_orders'
+          },
+          async (payload: any) => {
+            if (!isMounted) return
+            const newOrderId = payload.new.id
+            const { data: newOrder } = await supabase
+              .from('restaurant_orders')
+              .select(`
+                *,
+                restaurant_order_details (
+                  *,
+                  restaurant_menus (name)
+                ),
+                rooms (room_number)
+              `)
+              .eq('id', newOrderId)
+              .single()
+
+            if (newOrder && isMounted) {
+              const itemsStr = newOrder.restaurant_order_details
+                ?.map((d: any) => `${d.quantity}x ${d.restaurant_menus?.name}`)
+                .join(', ')
+              alert(`🔔 PESANAN KITCHEN BARU!\nKamar: ${newOrder.rooms?.room_number || 'TBD'}\nMenu: ${itemsStr}`)
+              fetchOrders()
+            }
+          }
+        )
+        .subscribe()
     }
     checkUser()
+
+    return () => {
+      isMounted = false
+      if (channel) {
+        supabase.removeChannel(channel)
+        channel = null
+      }
+    }
   }, [])
 
   const fetchOrders = async () => {
@@ -94,11 +147,9 @@ export default function RestaurantDashboard() {
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-emerald-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/30">
-              <Utensils className="w-6 h-6" />
-            </div>
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
             <div>
-              <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">zzz-hotel</span>
+              <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">ZZZ HOTEL</span>
               <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest block mt-0.5">Dapur</span>
             </div>
           </Link>

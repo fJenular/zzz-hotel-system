@@ -11,6 +11,7 @@ import {
   UserCheck, UserX, Activity
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { format, formatDistanceToNow } from 'date-fns'
 
 export default function ManagerDashboard() {
@@ -217,11 +218,9 @@ export default function ManagerDashboard() {
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30">
-              <Building2 className="w-6 h-6" />
-            </div>
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
             <div>
-              <span className="text-xl font-black text-white tracking-tight block leading-tight">zzz-hotel</span>
+              <span className="text-xl font-black text-white tracking-tight block leading-tight">ZZZ HOTEL</span>
               <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest block mt-0.5">Suite Eksekutif</span>
             </div>
           </Link>

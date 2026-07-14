@@ -8,6 +8,7 @@ import {
   ArrowRight, ShieldAlert, Sparkles, User, DoorOpen
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function ReceptionistCheckInPage() {
   const router = useRouter()
@@ -47,8 +48,13 @@ export default function ReceptionistCheckInPage() {
       .select(`
         *,
         users (full_name, email, phone),
-        rooms (room_number),
-        room_types (name)
+        rooms (
+          room_number,
+          room_types (name)
+        ),
+        payments (
+          status
+        )
       `)
       .eq('status', 'confirmed')
       .order('check_in', { ascending: true })
@@ -56,7 +62,11 @@ export default function ReceptionistCheckInPage() {
     if (error) {
       alert(error.message)
     } else {
-      setBookings(data || [])
+      const mapped = (data || []).map((b: any) => ({
+        ...b,
+        payment_status: b.payments?.[0]?.status || 'unpaid'
+      }))
+      setBookings(mapped)
     }
     setLoading(false)
   }
@@ -96,9 +106,9 @@ export default function ReceptionistCheckInPage() {
       {/* LEFT SIDEBAR */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
-          <Link href="/" className="flex items-center gap-3 text-xl font-bold text-gray-900 tracking-tight">
-            <span className="p-2 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-200">🏨</span>
-            <span>ZZZ HOTEL</span>
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
+            <span className="text-xl font-bold text-gray-900 tracking-tight">ZZZ HOTEL</span>
           </Link>
 
           <nav className="space-y-1">
@@ -179,7 +189,7 @@ export default function ReceptionistCheckInPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-bold text-rose-500">Room {booking.rooms?.room_number}</div>
-                        <div className="text-[10px] text-gray-400">{booking.room_types?.name}</div>
+                        <div className="text-[10px] text-gray-400">{booking.rooms?.room_types?.name}</div>
                       </td>
                       <td className="px-6 py-4">
                         {new Date(booking.check_in).toLocaleDateString()} - {new Date(booking.check_out).toLocaleDateString()}

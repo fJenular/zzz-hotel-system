@@ -42,9 +42,9 @@ export default function AboutPage() {
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 text-xl font-bold text-gray-900 tracking-tight">
-            <span className="p-2 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-200">🏨</span>
-            <span>ZZZ HOTEL</span>
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
+            <span className="text-xl font-bold text-gray-900 tracking-tight">ZZZ HOTEL</span>
           </Link>
 
           {/* Navigation Links */}

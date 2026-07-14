@@ -26,9 +26,31 @@ export default function RestaurantOrderPage() {
   const [submitting, setSubmitting] = useState(false)
   const [generalNotes, setGeneralNotes] = useState('')
 
+  const fetchOrderHistory = async (userId: string) => {
+    const { data: ordersData } = await supabase
+      .from('restaurant_orders')
+      .select(`
+        *,
+        restaurant_order_details (
+          *,
+          restaurant_menus (name)
+        ),
+        rooms (room_number)
+      `)
+      .eq('guest_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (ordersData) setOrderHistory(ordersData)
+  }
+
   useEffect(() => {
+    let isMounted = true
+    let channel: any
+
     const checkUser = async () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!isMounted) return
+
       if (!currentUser) {
         router.push('/login?redirect=/restaurant/order')
         return
@@ -39,19 +61,23 @@ export default function RestaurantOrderPage() {
         .select('*')
         .eq('id', currentUser.id)
         .single()
+      if (!isMounted) return
       setUser(userData)
 
-      // Fetch user bookings (must be confirmed or checked_in to order)
+      // Fetch user bookings (MUST be checked_in to order room service)
       const { data: bookingsData } = await supabase
         .from('bookings')
         .select(`
           *,
-          rooms (room_number),
-          room_types (name)
+          rooms (
+            room_number,
+            room_types (name)
+          )
         `)
         .eq('user_id', currentUser.id)
-        .in('status', ['confirmed', 'checked_in'])
+        .eq('status', 'checked_in')
         .order('check_in', { ascending: false })
+      if (!isMounted) return
 
       if (bookingsData && bookingsData.length > 0) {
         setBookings(bookingsData)
@@ -63,28 +89,47 @@ export default function RestaurantOrderPage() {
         .from('restaurant_menus')
         .select('*')
         .eq('is_available', true)
+      if (!isMounted) return
 
       if (menusData) setMenus(menusData)
 
       // Fetch past orders
-      const { data: ordersData } = await supabase
-        .from('restaurant_orders')
-        .select(`
-          *,
-          restaurant_order_details (
-            *,
-            restaurant_menus (name)
-          ),
-          rooms (room_number)
-        `)
-        .eq('guest_id', currentUser.id)
-        .order('created_at', { ascending: false })
-
-      if (ordersData) setOrderHistory(ordersData)
+      await fetchOrderHistory(currentUser.id)
+      if (!isMounted) return
       setLoading(false)
+
+      // Subscribe to real-time status updates of restaurant orders
+      channel = supabase
+        .channel(`restaurant-orders-${currentUser.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'restaurant_orders',
+            filter: `guest_id=eq.${currentUser.id}`
+          },
+          (payload: any) => {
+            const updatedOrder = payload.new
+            if (updatedOrder.status === 'preparing') {
+              alert('🍳 Dapur ZZZ Hotel: Pesanan Anda sedang diproses oleh chef!')
+            } else if (updatedOrder.status === 'delivered') {
+              alert('🛵 Dapur ZZZ Hotel: Pesanan makanan Anda sudah siap dan sedang diantarkan ke kamar!')
+            }
+            if (isMounted) fetchOrderHistory(currentUser.id)
+          }
+        )
+        .subscribe()
     }
     
     checkUser()
+
+    return () => {
+      isMounted = false
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
+    }
   }, [])
 
   const handleAddToCart = (menuItem: any) => {
@@ -176,9 +221,9 @@ export default function RestaurantOrderPage() {
       {/* LEFT SIDEBAR */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
-          <Link href="/" className="flex items-center gap-3 text-xl font-bold text-gray-900 tracking-tight">
-            <span className="p-2 bg-rose-500 text-white rounded-xl shadow-md shadow-rose-200">🏨</span>
-            <span>ZZZ HOTEL</span>
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
+            <span className="text-xl font-bold text-gray-900 tracking-tight">ZZZ HOTEL</span>
           </Link>
 
           <nav className="space-y-1">
@@ -244,15 +289,15 @@ export default function RestaurantOrderPage() {
           ) : bookings.length === 0 ? (
             <div className="bg-white border border-rose-100 p-8 text-center rounded-2xl animate-scale-up">
               <Utensils className="w-12 h-12 text-rose-300 mx-auto mb-3" />
-              <h2 className="text-lg font-bold text-gray-900">No Confirmed Booking Found</h2>
+              <h2 className="text-lg font-bold text-gray-900">Belum Ada Check-In Aktif</h2>
               <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">
-                Dining and Room Service is exclusive to guests staying in our hotel. Please book a stay first to browse the menu.
+                Pemesanan makanan & layanan kamar hanya tersedia bagi tamu yang sudah melakukan check-in dan berstatus menginap di hotel kami.
               </p>
               <button 
-                onClick={() => router.push('/booking/select-room')}
+                onClick={() => router.push('/')}
                 className="mt-6 px-5 py-2.5 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition text-sm font-bold shadow-md shadow-rose-200"
               >
-                Find & Book Room
+                Kembali ke Beranda
               </button>
             </div>
           ) : (
@@ -272,7 +317,7 @@ export default function RestaurantOrderPage() {
                       }`}
                     >
                       <p className="text-lg font-black">Room {booking.rooms?.room_number}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{booking.room_types?.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{booking.rooms?.room_types?.name}</p>
                       <p className="text-[10px] text-gray-400 mt-1">Check-out: {new Date(booking.check_out).toLocaleDateString()}</p>
                     </button>
                   ))}

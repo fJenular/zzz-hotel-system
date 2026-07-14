@@ -9,6 +9,7 @@ import {
   ArrowUpRight, ArrowDownRight, ChevronDown, Printer
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import * as XLSX from 'xlsx'
 
 export default function ManagerReportsPage() {
@@ -83,7 +84,7 @@ export default function ManagerReportsPage() {
 
     let bookingsQuery = supabase
       .from('bookings')
-      .select('*, users (full_name, email, phone), rooms (room_number), room_types (name)')
+      .select('*, users (full_name, email, phone), rooms (room_number, room_types (name)), payments (status)')
       .order('created_at', { ascending: false })
 
     let ordersQuery = supabase
@@ -115,7 +116,13 @@ export default function ManagerReportsPage() {
       paymentsQuery
     ])
 
-    if (bookingsRes.data) setBookings(bookingsRes.data)
+    if (bookingsRes.data) {
+      const mapped = bookingsRes.data.map((b: any) => ({
+        ...b,
+        payment_status: b.payments?.[0]?.status || 'unpaid'
+      }))
+      setBookings(mapped)
+    }
     if (ordersRes.data) setOrders(ordersRes.data)
     if (paymentsRes.data) setPayments(paymentsRes.data)
 
@@ -143,7 +150,7 @@ export default function ManagerReportsPage() {
           'Email': b.users?.email || '-',
           'Telepon': b.users?.phone || '-',
           'No. Kamar': b.rooms?.room_number || 'N/A',
-          'Tipe Kamar': b.room_types?.name || '-',
+          'Tipe Kamar': b.rooms?.room_types?.name || '-',
           'Check In': new Date(b.check_in).toLocaleDateString(),
           'Check Out': new Date(b.check_out).toLocaleDateString(),
           'Tamu': b.guests_count,
@@ -240,11 +247,9 @@ export default function ManagerReportsPage() {
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30">
-              <BarChart3 className="w-6 h-6" />
-            </div>
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
             <div>
-              <span className="text-xl font-black text-white tracking-tight block leading-tight">zzz-hotel</span>
+              <span className="text-xl font-black text-white tracking-tight block leading-tight">ZZZ HOTEL</span>
               <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest block mt-0.5">Laporan</span>
             </div>
           </Link>
@@ -509,7 +514,7 @@ export default function ManagerReportsPage() {
                               </td>
                               <td className="px-6 py-4">
                                 <span className="font-bold text-indigo-600">Kamar {b.rooms?.room_number || 'N/A'}</span>
-                                <div className="text-[10px] text-slate-400">{b.room_types?.name}</div>
+                                <div className="text-[10px] text-slate-400">{b.rooms?.room_types?.name}</div>
                               </td>
                               <td className="px-6 py-4 text-slate-600 font-medium">{new Date(b.check_in).toLocaleDateString()}</td>
                               <td className="px-6 py-4 text-slate-600 font-medium">{new Date(b.check_out).toLocaleDateString()}</td>

@@ -9,6 +9,7 @@ import {
   Heart, Mail, MoreHorizontal, QrCode, X, Check
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import QRCode from 'react-qr-code'
 
 export default function ReceptionistDashboard() {
@@ -65,11 +66,17 @@ export default function ReceptionistDashboard() {
 
     const { data: bookingsData } = await supabase
       .from('bookings')
-      .select('*, users (full_name, email, phone), rooms (room_number), room_types (name)')
+      .select('*, users (full_name, email, phone), rooms (room_number, room_types (name)), payments (status)')
       .order('created_at', { ascending: false })
 
     if (roomsData) setRooms(roomsData)
-    if (bookingsData) setBookings(bookingsData)
+    if (bookingsData) {
+      const mapped = bookingsData.map((b: any) => ({
+        ...b,
+        payment_status: b.payments?.[0]?.status || 'unpaid'
+      }))
+      setBookings(mapped)
+    }
     setLoading(false)
   }
 
@@ -272,11 +279,9 @@ export default function ReceptionistDashboard() {
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-amber-100 p-6 shrink-0 justify-between">
         <div className="space-y-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/30">
-              <Sparkles className="w-6 h-6" />
-            </div>
+            <Image src="/Zzz.svg" alt="ZZZ Hotel Logo" width={40} height={40} className="object-contain" priority />
             <div>
-              <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">zzz-hotel</span>
+              <span className="text-xl font-black text-slate-800 tracking-tight block leading-tight">ZZZ HOTEL</span>
               <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mt-0.5">Resepsionis</span>
             </div>
           </Link>
@@ -510,7 +515,7 @@ export default function ReceptionistDashboard() {
                               </td>
                               <td className="px-6 py-4">
                                 <div className="font-semibold text-amber-600">Kamar {booking.rooms?.room_number}</div>
-                                <div className="text-[10px] text-slate-400">{booking.room_types?.name}</div>
+                                <div className="text-[10px] text-slate-400">{booking.rooms?.room_types?.name}</div>
                               </td>
                               <td className="px-6 py-4">
                                 <div className="text-xs font-medium text-slate-600">
@@ -575,7 +580,7 @@ export default function ReceptionistDashboard() {
                               </td>
                               <td className="px-6 py-4">
                                 <div className="font-semibold text-amber-600">Kamar {booking.rooms?.room_number}</div>
-                                <div className="text-[10px] text-slate-400">{booking.room_types?.name}</div>
+                                <div className="text-[10px] text-slate-400">{booking.rooms?.room_types?.name}</div>
                               </td>
                               <td className="px-6 py-4">
                                 <div className="text-xs font-medium text-slate-600">
