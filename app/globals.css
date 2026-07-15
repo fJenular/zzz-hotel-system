@@ -140,3 +140,9 @@
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #cbd5e1;
 }
+
+@keyframes toastProgress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+

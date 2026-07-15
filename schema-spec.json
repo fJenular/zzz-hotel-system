@@ -468,6 +468,30 @@
             "$ref": "#/parameters/rowFilter.room_types.updated_at"
           },
           {
+            "$ref": "#/parameters/rowFilter.room_types.facilities"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.max_adults"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.max_children"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.bed_configuration"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.area_sqm"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.view_type"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.room_size"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.amenities"
+          },
+          {
             "$ref": "#/parameters/select"
           },
           {
@@ -552,6 +576,30 @@
             "$ref": "#/parameters/rowFilter.room_types.updated_at"
           },
           {
+            "$ref": "#/parameters/rowFilter.room_types.facilities"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.max_adults"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.max_children"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.bed_configuration"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.area_sqm"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.view_type"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.room_size"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.amenities"
+          },
+          {
             "$ref": "#/parameters/preferReturn"
           }
         ],
@@ -586,6 +634,30 @@
           },
           {
             "$ref": "#/parameters/rowFilter.room_types.updated_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.facilities"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.max_adults"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.max_children"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.bed_configuration"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.area_sqm"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.view_type"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.room_size"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.room_types.amenities"
           },
           {
             "$ref": "#/parameters/body.room_types"
@@ -2141,6 +2213,12 @@
             "$ref": "#/parameters/rowFilter.rooms.updated_at"
           },
           {
+            "$ref": "#/parameters/rowFilter.rooms.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.rooms.image_url"
+          },
+          {
             "$ref": "#/parameters/select"
           },
           {
@@ -2225,6 +2303,12 @@
             "$ref": "#/parameters/rowFilter.rooms.updated_at"
           },
           {
+            "$ref": "#/parameters/rowFilter.rooms.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.rooms.image_url"
+          },
+          {
             "$ref": "#/parameters/preferReturn"
           }
         ],
@@ -2259,6 +2343,12 @@
           },
           {
             "$ref": "#/parameters/rowFilter.rooms.updated_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.rooms.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.rooms.image_url"
           },
           {
             "$ref": "#/parameters/body.rooms"
@@ -2700,6 +2790,46 @@
           "default": "now()",
           "format": "timestamp with time zone",
           "type": "string"
+        },
+        "facilities": {
+          "format": "jsonb"
+        },
+        "max_adults": {
+          "default": 2,
+          "format": "integer",
+          "type": "integer"
+        },
+        "max_children": {
+          "default": 1,
+          "format": "integer",
+          "type": "integer"
+        },
+        "bed_configuration": {
+          "default": "",
+          "format": "text",
+          "type": "string"
+        },
+        "area_sqm": {
+          "default": 0,
+          "format": "integer",
+          "type": "integer"
+        },
+        "view_type": {
+          "default": "",
+          "format": "text",
+          "type": "string"
+        },
+        "room_size": {
+          "default": "",
+          "format": "text",
+          "type": "string"
+        },
+        "amenities": {
+          "format": "text[]",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -3185,6 +3315,16 @@
           "default": "now()",
           "format": "timestamp with time zone",
           "type": "string"
+        },
+        "description": {
+          "default": "",
+          "format": "text",
+          "type": "string"
+        },
+        "image_url": {
+          "default": "",
+          "format": "text",
+          "type": "string"
         }
       },
       "type": "object"
@@ -3487,6 +3627,54 @@
     },
     "rowFilter.room_types.updated_at": {
       "name": "updated_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.room_types.facilities": {
+      "name": "facilities",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.room_types.max_adults": {
+      "name": "max_adults",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.room_types.max_children": {
+      "name": "max_children",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.room_types.bed_configuration": {
+      "name": "bed_configuration",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.room_types.area_sqm": {
+      "name": "area_sqm",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.room_types.view_type": {
+      "name": "view_type",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.room_types.room_size": {
+      "name": "room_size",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.room_types.amenities": {
+      "name": "amenities",
       "required": false,
       "in": "query",
       "type": "string"
@@ -4039,6 +4227,18 @@
     },
     "rowFilter.rooms.updated_at": {
       "name": "updated_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.rooms.description": {
+      "name": "description",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.rooms.image_url": {
+      "name": "image_url",
       "required": false,
       "in": "query",
       "type": "string"

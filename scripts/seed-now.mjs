@@ -164,4 +164,51 @@ if (roomsErr) {
   console.log(`✅ Inserted ${insertedRooms.length} rooms`)
 }
 
-console.log('\n🎉 Selesai re-seeding untuk Bale, Serambi, Pendopo, Puri!')
+// =======================================
+// STEP 4: Seed Restaurant Menus
+// =======================================
+console.log('\n5️⃣  Seeding Restaurant Menus...')
+
+// Clean existing menus
+await sb.from('restaurant_order_details').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+await sb.from('restaurant_orders').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+await sb.from('restaurant_menus').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+
+const menusToInsert = [
+  // Main Course
+  { name: 'Nasi Goreng Spesial', description: 'Nasi goreng dengan telur, ayam suwir, udang, dan acar timun segar', price: 45000, category: 'Main Course', is_available: true, image_url: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Mie Goreng Seafood', description: 'Mie goreng dengan udang segar, cumi-cumi, dan sayuran pilihan', price: 50000, category: 'Main Course', is_available: true, image_url: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Ayam Bakar Madu', description: 'Ayam kampung pilihan dengan saus madu spesial dan lalapan segar', price: 65000, category: 'Main Course', is_available: true, image_url: 'https://images.unsplash.com/photo-1598515214211-89d3e73ae83b?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Soto Ayam Betawi', description: 'Soto kuah santan khas Betawi dengan irisan ayam, kentang, dan emping', price: 40000, category: 'Main Course', is_available: true, image_url: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Rendang Sapi Premium', description: 'Rendang daging sapi pilihan dengan bumbu rempah khas Minang yang meresap sempurna', price: 75000, category: 'Main Course', is_available: true, image_url: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Gado-Gado Nusantara', description: 'Sayuran segar rebus dengan saus kacang spesial, kerupuk, dan telur pindang', price: 35000, category: 'Main Course', is_available: true, image_url: 'https://images.unsplash.com/photo-1540189549336-e6e99eb4b475?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Ikan Bakar Bumbu Bali', description: 'Ikan kakap bakar dengan bumbu Bali kaya rempah disajikan dengan nasi putih', price: 85000, category: 'Main Course', is_available: true, image_url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=80' },
+  // Appetizers
+  { name: 'Lumpia Goreng Udang', description: 'Lumpia renyah berisi udang, bengkoang, dan wortel dengan saus asam manis', price: 28000, category: 'Appetizers', is_available: true, image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Perkedel Jagung', description: 'Perkedel jagung manis goreng renyah dengan saus sambal terasi', price: 22000, category: 'Appetizers', is_available: true, image_url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Tahu Isi Sayur', description: 'Tahu goreng berisi sayuran segar dengan saus kacang pedas', price: 20000, category: 'Appetizers', is_available: true, image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Kerupuk Udang & Sambal', description: 'Kerupuk udang renyah disajikan dengan sambal merah dan hijau', price: 15000, category: 'Appetizers', is_available: true, image_url: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&auto=format&fit=crop&q=80' },
+  // Beverages
+  { name: 'Es Teh Manis Segar', description: 'Teh hitam manis segar dengan es batu pilihan', price: 12000, category: 'Beverages', is_available: true, image_url: 'https://images.unsplash.com/photo-1497534446932-c925b458314e?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Jus Alpukat Susu', description: 'Alpukat segar diblender dengan susu kental manis dan es batu', price: 28000, category: 'Beverages', is_available: true, image_url: 'https://images.unsplash.com/photo-1553530979-7ee52a2670c4?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Es Kelapa Muda', description: 'Kelapa muda segar dengan air dan daging kelapa langsung dari buahnya', price: 25000, category: 'Beverages', is_available: true, image_url: 'https://images.unsplash.com/photo-1525385133336-25251042599c?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Kopi Tubruk ZZZ', description: 'Kopi robusta pilihan diseduh tradisional khas Indonesia', price: 18000, category: 'Beverages', is_available: true, image_url: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Jus Mangga Alpukat', description: 'Perpaduan mangga harum manis dan alpukat creamy, segar dan menyehatkan', price: 30000, category: 'Beverages', is_available: true, image_url: 'https://images.unsplash.com/photo-1534353436294-0dbd4bdac845?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Es Cincau Hijau', description: 'Minuman tradisional cincau hijau dengan santan dan gula merah cair', price: 20000, category: 'Beverages', is_available: true, image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500&auto=format&fit=crop&q=80' },
+  // Desserts
+  { name: 'Klepon Isi Kelapa', description: 'Klepon hijau pandan berisi gula merah cair dengan taburan kelapa parut', price: 22000, category: 'Desserts', is_available: true, image_url: 'https://images.unsplash.com/photo-1517433456452-f9633a875f6f?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Es Pisang Ijo Makassar', description: 'Pisang dibalut adonan pandan beku dengan saus santan dan sirup rose', price: 30000, category: 'Desserts', is_available: true, image_url: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Dadar Gulung Pandan', description: 'Crepe pandan isi kelapa muda parut dan gula merah, lembut dan harum', price: 20000, category: 'Desserts', is_available: true, image_url: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Bubur Sumsum', description: 'Bubur tepung beras lembut dengan santan dan saus gula merah kental', price: 18000, category: 'Desserts', is_available: true, image_url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Pancake Blueberry', description: 'Pancake lembut dengan blueberry segar, maple syrup, dan whipped cream', price: 38000, category: 'Desserts', is_available: true, image_url: 'https://images.unsplash.com/photo-1528207776546-365bb710ee93?w=500&auto=format&fit=crop&q=80' }
+]
+
+const { data: insertedMenus, error: menusErr } = await sb.from('restaurant_menus').insert(menusToInsert).select()
+if (menusErr) {
+  console.error('❌ Menus insert failed:', menusErr.message)
+} else {
+  console.log(`✅ Inserted ${insertedMenus.length} restaurant menu items`)
+}
+
+console.log('\n🎉 Selesai re-seeding untuk Bale, Serambi, Pendopo, Puri, dan Restaurant Menu!')
+

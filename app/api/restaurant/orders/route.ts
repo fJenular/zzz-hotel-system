@@ -61,7 +61,8 @@ export async function POST(request: Request) {
         quantity: item.quantity,
         price: menu.price,
         subtotal: subtotal,
-        notes: item.notes
+        // notes column does not exist on restaurant_order_details — omitted intentionally
+        // To add per-item notes, run migration: ALTER TABLE restaurant_order_details ADD COLUMN IF NOT EXISTS notes TEXT;
       })
     }
 

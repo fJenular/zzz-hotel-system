@@ -23,6 +23,7 @@ export default function AdminMenusPage() {
     description: '',
     price: 0,
     category: 'Main Course',
+    image_url: '',
     is_available: true
   })
 
@@ -33,6 +34,7 @@ export default function AdminMenusPage() {
     description: '',
     price: 0,
     category: '',
+    image_url: '',
     is_available: true
   })
 
@@ -91,6 +93,7 @@ export default function AdminMenusPage() {
           description: newForm.description,
           price: Number(newForm.price),
           category: newForm.category,
+          image_url: newForm.image_url || null,
           is_available: newForm.is_available
         })
 
@@ -103,6 +106,7 @@ export default function AdminMenusPage() {
         description: '',
         price: 0,
         category: 'Main Course',
+        image_url: '',
         is_available: true
       })
       fetchMenus()
@@ -118,6 +122,7 @@ export default function AdminMenusPage() {
       description: item.description,
       price: item.price,
       category: item.category,
+      image_url: item.image_url || '',
       is_available: item.is_available
     })
   }
@@ -131,6 +136,7 @@ export default function AdminMenusPage() {
           description: editForm.description,
           price: Number(editForm.price),
           category: editForm.category,
+          image_url: editForm.image_url || null,
           is_available: editForm.is_available
         })
         .eq('id', itemId)
@@ -256,7 +262,7 @@ export default function AdminMenusPage() {
                   </select>
                 </div>
 
-                <div className="space-y-1.5 md:col-span-3">
+                <div className="space-y-1.5 md:col-span-2">
                   <label className="text-xs font-bold text-neutral-500 uppercase">Description</label>
                   <input
                     type="text"
@@ -268,7 +274,18 @@ export default function AdminMenusPage() {
                   />
                 </div>
 
-                <div className="space-y-1.5 flex items-center gap-2 pt-6">
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-xs font-bold text-neutral-500 uppercase">Image URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/photo-..."
+                    value={newForm.image_url}
+                    onChange={(e) => setNewForm({ ...newForm, image_url: e.target.value })}
+                    className="w-full border border-neutral-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5 flex items-center gap-2 pt-6 md:col-span-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -301,6 +318,7 @@ export default function AdminMenusPage() {
                 <table className="min-w-full divide-y divide-gray-100">
                   <thead className="bg-gray-50">
                     <tr>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Image</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Menu Name</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Category</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase">Price</th>
@@ -312,6 +330,28 @@ export default function AdminMenusPage() {
                   <tbody className="divide-y divide-gray-100">
                     {filteredMenus.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50/50 transition">
+                        <td className="px-6 py-4">
+                          {editingMenuId === item.id ? (
+                            <div className="space-y-1">
+                              {editForm.image_url && (
+                                <img src={editForm.image_url} alt="Preview" className="w-12 h-12 rounded-lg object-cover border" />
+                              )}
+                              <input 
+                                type="text"
+                                value={editForm.image_url}
+                                onChange={(e) => setEditForm({ ...editForm, image_url: e.target.value })}
+                                placeholder="Image URL..."
+                                className="border border-neutral-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-amber-400 bg-white w-32"
+                              />
+                            </div>
+                          ) : (
+                            item.image_url ? (
+                              <img src={item.image_url} alt={item.name} className="w-12 h-12 rounded-lg object-cover border" />
+                            ) : (
+                              <div className="w-12 h-12 rounded-lg bg-gray-100 border flex items-center justify-center text-[10px] text-gray-400">No Image</div>
+                            )
+                          )}
+                        </td>
                         <td className="px-6 py-4 font-bold text-neutral-900 text-sm">
                           {editingMenuId === item.id ? (
                             <input 
