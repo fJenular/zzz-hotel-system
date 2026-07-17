@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+import { createOTP } from '@/lib/email/otp'
+import { sendOTPEmail } from '@/lib/email/mailer'
 
 // Service role untuk admin operations (cek existing user, insert ke users table)
 const supabaseAdmin = createClient(
@@ -54,14 +56,12 @@ export async function POST(request: Request) {
 
     console.log('✅ Email is available')
 
-    // Gunakan signUp() agar Supabase otomatis mengirimkan email konfirmasi
+    // Gunakan signUp() — verifikasi ditangani via OTP kita sendiri
     console.log('🔐 Creating auth user via signUp...')
     const { data: authData, error: authError } = await supabaseClient.auth.signUp({
       email: validatedData.email,
       password: validatedData.password,
       options: {
-        // Supabase akan kirim email konfirmasi ke link ini
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
         data: {
           full_name: validatedData.fullName,
           phone: validatedData.phone
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
         full_name: validatedData.fullName,
         phone: validatedData.phone,
         role: 'guest',
-        email_verified: false // Akan diubah ke true setelah user klik link verifikasi
+        email_verified: false // Akan diubah ke true setelah user input OTP
       })
 
     if (insertError) {
@@ -125,11 +125,21 @@ export async function POST(request: Request) {
     }
 
     console.log('✅ User record created')
-    console.log('📧 Supabase will send confirmation email automatically')
+
+    // Kirim OTP verifikasi via Gmail SMTP
+    console.log('📧 Sending OTP email via Gmail...')
+    try {
+      const otp = await createOTP(validatedData.email)
+      await sendOTPEmail(validatedData.email, otp, validatedData.fullName)
+      console.log('✅ OTP email sent successfully')
+    } catch (emailErr: any) {
+      console.error('❌ OTP send error:', emailErr.message)
+      // Jangan gagalkan pendaftaran jika email gagal — user bisa minta kirim ulang
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Registration successful. Please check your email to verify your account.',
+      message: 'Pendaftaran berhasil. Kode OTP telah dikirim ke email Anda.',
       data: {
         userId: authData.user.id,
         email: validatedData.email,

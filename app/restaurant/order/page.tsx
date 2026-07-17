@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
+import { createBrowserSupabaseClient, getBrowserUser } from '@/lib/supabase/browser'
 import {
   Home, Compass, Sparkles, MessageSquare, User, LogOut, Bell,
   Plus, Minus, ShoppingCart, Utensils, Search, ChefHat, CreditCard,
@@ -41,16 +41,29 @@ function RestaurantOrderContent() {
 
   // ── Fetch order history ──────────────────────────────────────────────────
   const fetchOrderHistory = async (userId: string) => {
-    const { data } = await supabase
-      .from('restaurant_orders')
-      .select(`
-        *,
-        restaurant_order_details (*, restaurant_menus (name, image_url)),
-        rooms (room_number)
-      `)
-      .eq('guest_id', userId)
-      .order('created_at', { ascending: false })
-    if (data) setOrderHistory(data)
+    let orderData = null
+    try {
+      const { data } = await supabase
+        .from('restaurant_orders')
+        .select(`
+          *,
+          restaurant_order_details (*, restaurant_menus (name, image_url)),
+          rooms (room_number)
+        `)
+        .eq('guest_id', userId)
+        .order('created_at', { ascending: false })
+      orderData = data
+      if (data) localStorage.setItem(`zzz_order_history_${userId}`, JSON.stringify(data))
+    } catch (e) {
+      console.error('Fetch order history error:', e)
+    }
+
+    if (!orderData) {
+      const cached = localStorage.getItem(`zzz_order_history_${userId}`)
+      if (cached) orderData = JSON.parse(cached)
+    }
+
+    if (orderData) setOrderHistory(orderData)
   }
 
   // ── Bootstrap ─────────────────────────────────────────────────────────────
@@ -64,20 +77,44 @@ function RestaurantOrderContent() {
     let channel: any
 
     const init = async () => {
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const currentUser = await getBrowserUser(supabase)
       if (!isMounted) return
       if (!currentUser) { router.push('/login?redirect=/restaurant/order'); return }
 
-      const { data: userData } = await supabase.from('users').select('*').eq('id', currentUser.id).single()
+      // Try to get user profile
+      let userData = null
+      try {
+        const { data } = await supabase.from('users').select('*').eq('id', currentUser.id).single()
+        userData = data
+        if (data) localStorage.setItem(`zzz_user_${currentUser.id}`, JSON.stringify(data))
+      } catch (e) {
+        console.error('Fetch user error:', e)
+      }
+      if (!userData) {
+        const cached = localStorage.getItem(`zzz_user_${currentUser.id}`)
+        if (cached) userData = JSON.parse(cached)
+      }
       if (!isMounted) return
-      setUser(userData)
+      if (userData) setUser(userData)
 
-      const { data: bookingsData } = await supabase
-        .from('bookings')
-        .select('*, rooms(room_number, room_types(name))')
-        .eq('user_id', currentUser.id)
-        .eq('status', 'checked_in')
-        .order('check_in', { ascending: false })
+      // Try to get bookings
+      let bookingsData = null
+      try {
+        const { data } = await supabase
+          .from('bookings')
+          .select('*, rooms(room_number, room_types(name))')
+          .eq('user_id', currentUser.id)
+          .eq('status', 'checked_in')
+          .order('check_in', { ascending: false })
+        bookingsData = data
+        if (data) localStorage.setItem(`zzz_bookings_${currentUser.id}`, JSON.stringify(data))
+      } catch (e) {
+        console.error('Fetch bookings error:', e)
+      }
+      if (!bookingsData) {
+        const cached = localStorage.getItem(`zzz_bookings_${currentUser.id}`)
+        if (cached) bookingsData = JSON.parse(cached)
+      }
       if (!isMounted) return
 
       if (bookingsData?.length) {
@@ -85,11 +122,23 @@ function RestaurantOrderContent() {
         setSelectedBooking(bookingsData[0])
       }
 
-      const { data: menusData } = await supabase
-        .from('restaurant_menus')
-        .select('*')
-        .eq('is_available', true)
-        .order('category')
+      // Try to get menus
+      let menusData = null
+      try {
+        const { data } = await supabase
+          .from('restaurant_menus')
+          .select('*')
+          .eq('is_available', true)
+          .order('category')
+        menusData = data
+        if (data) localStorage.setItem('zzz_restaurant_menus', JSON.stringify(data))
+      } catch (e) {
+        console.error('Fetch menus error:', e)
+      }
+      if (!menusData) {
+        const cached = localStorage.getItem('zzz_restaurant_menus')
+        if (cached) menusData = JSON.parse(cached)
+      }
       if (!isMounted) return
       if (menusData) setMenus(menusData)
 
@@ -678,11 +727,20 @@ function RestaurantOrderContent() {
   )
 }
 
-// ─── Root export (wraps with ToastProvider) ───────────────────────────────────
+// ─── Root export (wraps with ToastProvider and Suspense) ───────────────────────
 export default function RestaurantOrderPage() {
   return (
     <ToastProvider>
-      <RestaurantOrderContent />
+      <Suspense fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gray-50/50">
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-900 border-t-transparent" />
+            <p className="text-sm text-slate-500">Memuat Menu Restoran...</p>
+          </div>
+        </div>
+      }>
+        <RestaurantOrderContent />
+      </Suspense>
     </ToastProvider>
   )
 }

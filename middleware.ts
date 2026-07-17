@@ -25,7 +25,34 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  let isNetworkError = false
+
+  try {
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+    user = authUser
+    
+    if (authError) {
+      const errMsg = authError.message?.toLowerCase() || ''
+      if (
+        errMsg.includes('fetch failed') ||
+        errMsg.includes('enotfound') ||
+        errMsg.includes('network') ||
+        errMsg.includes('request timeout')
+      ) {
+        isNetworkError = true
+      }
+    }
+  } catch (e: any) {
+    const errMsg = e?.message?.toLowerCase() || ''
+    if (
+      errMsg.includes('fetch failed') ||
+      errMsg.includes('enotfound') ||
+      errMsg.includes('network')
+    ) {
+      isNetworkError = true
+    }
+  }
 
   const { pathname } = request.nextUrl
 
@@ -58,6 +85,9 @@ export async function middleware(request: NextRequest) {
 
   // Protected routes - require auth
   if (!user) {
+    if (isNetworkError) {
+      return supabaseResponse
+    }
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)

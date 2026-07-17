@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
+import { createBrowserSupabaseClient, getBrowserUser } from '@/lib/supabase/browser'
 import { 
   User, Camera, Save, ArrowLeft, Loader2, Mail, Phone, 
   Shield, CheckCircle2, AlertCircle, Sparkles, Edit3
@@ -27,17 +27,29 @@ export default function ProfilePage() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser()
+        const authUser = await getBrowserUser(supabase)
         if (!authUser) {
           router.push('/login?redirect=/profile')
           return
         }
 
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authUser.id)
-          .single()
+        let userData = null
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', authUser.id)
+            .single()
+          userData = data
+          if (data) localStorage.setItem(`zzz_user_${authUser.id}`, JSON.stringify(data))
+        } catch (err) {
+          console.error('Error fetching profile from DB:', err)
+        }
+
+        if (!userData) {
+          const cached = localStorage.getItem(`zzz_user_${authUser.id}`)
+          if (cached) userData = JSON.parse(cached)
+        }
 
         if (userData) {
           setUser(userData)

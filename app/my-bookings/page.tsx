@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
+import { createBrowserSupabaseClient, getBrowserUser } from '@/lib/supabase/browser'
 import { Home, Calendar, CreditCard, ArrowLeft, Loader2, QrCode, X, CheckCircle2, Copy, Download, Bed, ShieldCheck, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import QRCode from 'react-qr-code'
@@ -21,29 +21,51 @@ export default function MyBookingsPage() {
   useEffect(() => {
     const loadBookings = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser()
+        const authUser = await getBrowserUser(supabase)
         if (!authUser) {
           router.push('/login?redirect=/my-bookings')
           return
         }
 
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authUser.id)
-          .single()
+        // Try to get user data
+        let userData = null
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', authUser.id)
+            .single()
+          userData = data
+          if (data) localStorage.setItem(`zzz_user_${authUser.id}`, JSON.stringify(data))
+        } catch (err) {
+          console.error('Error fetching user profile:', err)
+        }
+        if (!userData) {
+          const cached = localStorage.getItem(`zzz_user_${authUser.id}`)
+          if (cached) userData = JSON.parse(cached)
+        }
+        if (userData) setUser(userData)
 
-        setUser(userData)
-
-        const { data: bookingsData } = await supabase
-          .from('bookings')
-          .select(`
-            *,
-            rooms (room_number, room_types(name, base_price))
-          `)
-          .eq('user_id', authUser.id)
-          .order('created_at', { ascending: false })
-
+        // Try to get bookings
+        let bookingsData = null
+        try {
+          const { data } = await supabase
+            .from('bookings')
+            .select(`
+              *,
+              rooms (room_number, room_types(name, base_price))
+            `)
+            .eq('user_id', authUser.id)
+            .order('created_at', { ascending: false })
+          bookingsData = data
+          if (data) localStorage.setItem(`zzz_my_bookings_${authUser.id}`, JSON.stringify(data))
+        } catch (err) {
+          console.error('Error fetching bookings:', err)
+        }
+        if (!bookingsData) {
+          const cached = localStorage.getItem(`zzz_my_bookings_${authUser.id}`)
+          if (cached) bookingsData = JSON.parse(cached)
+        }
         setBookings(bookingsData || [])
       } catch (err) {
         console.error('Error loading bookings:', err)

@@ -15,7 +15,7 @@ import {
   authPasswordInputClass,
   authPrimaryButtonClass,
 } from '@/components/auth/auth-shell'
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, LogIn } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, LogIn, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
 
@@ -35,6 +35,7 @@ function LoginForm() {
 
   // Get redirect param from URL
   const redirectTo = searchParams.get('redirect') || '/'
+  const justVerified = searchParams.get('verified') === '1'
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -143,12 +144,22 @@ function LoginForm() {
       }
     >
       <form onSubmit={handleLogin} className="space-y-5">
+        {justVerified && (
+          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <AlertDescription className="text-emerald-700 font-medium">
+              Email berhasil diverifikasi! Silakan login untuk melanjutkan.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {error && (
           <Alert variant="destructive" className="animate-shake rounded-2xl border-red-200 bg-red-50 text-red-700">
             <AlertCircle className="h-4 w-4 text-red-500" />
             <AlertDescription className="text-red-700">{error}</AlertDescription>
           </Alert>
         )}
+
 
         {/* Email */}
         <div className="space-y-2">
