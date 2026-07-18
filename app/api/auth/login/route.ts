@@ -28,12 +28,27 @@ export async function POST(request: Request) {
       )
     }
 
-    // Get user role from database
+    // Get user data from database (role + email_verified)
     const { data: userData } = await supabase
       .from('users')
-      .select('role, full_name, phone')
+      .select('role, full_name, phone, email_verified')
       .eq('id', data.user.id)
       .single()
+
+    // Blokir login jika email belum diverifikasi via OTP
+    if (!userData?.email_verified) {
+      // Sign out dulu supaya session tidak tersimpan
+      await supabase.auth.signOut()
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Email belum diverifikasi. Silakan cek email Anda untuk kode OTP.',
+          requiresVerification: true,
+          email: validatedData.email,
+        },
+        { status: 403 }
+      )
+    }
 
     return NextResponse.json({
       success: true,

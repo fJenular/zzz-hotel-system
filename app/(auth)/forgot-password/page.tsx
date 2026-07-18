@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -17,7 +17,7 @@ import { Mail, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ForgotPasswordPage() {
-  const supabase = createBrowserSupabaseClient()
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
@@ -29,17 +29,22 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       })
+      const json = await res.json()
 
-      if (error) {
-        setError(error.message)
-        setLoading(false)
+      if (!res.ok || !json.success) {
+        setError(json.error || 'Gagal memproses permintaan. Silakan coba lagi.')
         return
       }
 
       setSent(true)
+      setTimeout(() => {
+        router.push(`/reset-password?email=${encodeURIComponent(email)}`)
+      }, 2500)
     } catch (err: any) {
       console.error('Reset password error:', err)
       setError('Gagal memproses permintaan. Silakan coba lagi.')
@@ -51,27 +56,27 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <AuthShell
-        title="Periksa email Anda"
-        description="Tautan pengaturan ulang kata sandi telah dikirim ke alamat email Anda."
+        title="Kode OTP Dikirim!"
+        description="Kode OTP 6-digit telah dikirim ke alamat email Anda."
         icon={CheckCircle}
       >
         <div className="space-y-5 text-center">
           <div className="rounded-2xl border border-green-100 bg-green-50/50 p-4">
-            <p className="mb-1 text-xs font-semibold text-green-800 uppercase tracking-wider">Tautan dikirim ke:</p>
+            <p className="mb-1 text-xs font-semibold text-green-800 uppercase tracking-wider">Kode dikirim ke:</p>
             <p className="break-all text-sm font-semibold text-green-700">{email}</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 text-left">
-            <p className="text-xs font-semibold text-slate-700 mb-1">💡 Tips:</p>
-            <ul className="space-y-1 text-xs text-slate-500">
-              <li>• Periksa folder spam / junk jika Anda tidak menemukannya</li>
-              <li>• Tautan ini berlaku selama 1 jam</li>
-              <li>• Gunakan tautan terbaru jika Anda meminta ulang</li>
-            </ul>
+          <div className="py-2">
+            <p className="text-xs text-slate-400">Mengarahkan ke halaman reset password…</p>
+            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-3">
+              <div className="h-full bg-red-500 rounded-full animate-[progress_2.5s_linear_forwards]" />
+            </div>
           </div>
 
           <Button asChild className={authSecondaryButtonClass}>
-            <Link href="/login">Kembali ke halaman masuk</Link>
+            <Link href={`/reset-password?email=${encodeURIComponent(email)}`}>
+              Buka Halaman Reset Sekarang
+            </Link>
           </Button>
         </div>
       </AuthShell>

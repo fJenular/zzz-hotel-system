@@ -1,10 +1,19 @@
 import nodemailer from 'nodemailer'
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // STARTTLS
   auth: {
     user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    // Hilangkan spasi dari App Password jika ada
+    pass: (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, ''),
+  },
+  connectionTimeout: 10_000, // 10 detik
+  socketTimeout: 15_000,     // 15 detik
+  greetingTimeout: 10_000,
+  tls: {
+    rejectUnauthorized: false,
   },
 })
 
@@ -90,5 +99,94 @@ export async function sendOTPEmail(
     `.trim(),
   }
 
-  await transporter.sendMail(mailOptions)
+  console.log(`📨 Connecting to smtp.gmail.com:587 as ${process.env.GMAIL_USER}...`)
+  const info = await transporter.sendMail(mailOptions)
+  console.log(`✅ Email sent! MessageId: ${info.messageId}`)
+}
+
+/**
+ * Send a password-reset OTP email.
+ */
+export async function sendPasswordResetOTPEmail(
+  email: string,
+  otp: string,
+  fullName: string
+): Promise<void> {
+  const mailOptions = {
+    from: `"ZZZ Hotel" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: `${otp} — Kode Reset Kata Sandi ZZZ Hotel`,
+    html: `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Kata Sandi — ZZZ Hotel</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden;max-width:100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 100%);padding:36px 40px;text-align:center;">
+              <div style="display:inline-block;background:rgba(255,255,255,0.1);border-radius:16px;padding:12px 20px;">
+                <span style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">ZZZ Hotel</span>
+              </div>
+              <p style="color:#fca5a5;font-size:13px;margin:10px 0 0;letter-spacing:1px;text-transform:uppercase;">Reset Kata Sandi</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              <h1 style="font-size:22px;font-weight:700;color:#0f172a;margin:0 0 8px;">Halo, ${fullName}! 🔐</h1>
+              <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 28px;">
+                Kami menerima permintaan untuk mengatur ulang kata sandi akun <strong>ZZZ Hotel</strong> Anda. Gunakan kode di bawah ini untuk melanjutkan.
+              </p>
+
+              <!-- OTP Box -->
+              <div style="background:linear-gradient(135deg,#fff1f2,#ffe4e6);border-radius:16px;padding:28px;text-align:center;margin:0 0 28px;border:2px dashed #fca5a5;">
+                <p style="color:#be123c;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;font-weight:600;">Kode Reset Kata Sandi</p>
+                <span style="font-size:48px;font-weight:800;letter-spacing:12px;color:#9f1239;font-family:'Courier New',monospace;">${otp}</span>
+                <p style="color:#94a3b8;font-size:12px;margin:16px 0 0;">⏱ Berlaku selama <strong>10 menit</strong></p>
+              </div>
+
+              <!-- Warning -->
+              <div style="background:#fff7ed;border-left:4px solid #f97316;border-radius:8px;padding:14px 16px;margin:0 0 24px;">
+                <p style="color:#9a3412;font-size:13px;margin:0;line-height:1.6;">
+                  <strong>⚠️ Jangan bagikan kode ini</strong> kepada siapapun. Jika Anda tidak meminta reset kata sandi, abaikan email ini dan akun Anda tetap aman.
+                </p>
+              </div>
+
+              <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0;">
+                Kode akan kadaluarsa secara otomatis dalam 10 menit.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
+              <p style="color:#94a3b8;font-size:12px;margin:0;">
+                &copy; ${new Date().getFullYear()} ZZZ Hotel Management System. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim(),
+  }
+
+  console.log(`📨 Sending password reset OTP to ${email}...`)
+  const info = await transporter.sendMail(mailOptions)
+  console.log(`✅ Password reset email sent! MessageId: ${info.messageId}`)
 }

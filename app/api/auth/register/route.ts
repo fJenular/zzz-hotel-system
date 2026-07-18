@@ -4,16 +4,10 @@ import { z } from 'zod'
 import { createOTP } from '@/lib/email/otp'
 import { sendOTPEmail } from '@/lib/email/mailer'
 
-// Service role untuk admin operations (cek existing user, insert ke users table)
+// Service role untuk semua admin operations (bypass RLS, skip Supabase email)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-// Regular client (anon key) — digunakan untuk signUp agar Supabase kirim email otomatis
-const supabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 const registerSchema = z.object({
@@ -56,40 +50,74 @@ export async function POST(request: Request) {
 
     console.log('✅ Email is available')
 
-    // Gunakan signUp() — verifikasi ditangani via OTP kita sendiri
-    console.log('🔐 Creating auth user via signUp...')
-    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+    // Gunakan admin.createUser() dengan email_confirm:true agar Supabase
+    // tidak mengirim email verifikasi sendiri — OTP kita yang menangani.
+    console.log('🔐 Creating auth user via admin.createUser...')
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: validatedData.email,
       password: validatedData.password,
-      options: {
-        data: {
-          full_name: validatedData.fullName,
-          phone: validatedData.phone
-        }
+      email_confirm: true,
+      user_metadata: {
+        full_name: validatedData.fullName,
+        phone: validatedData.phone
       }
     })
 
-    if (authError) {
+    let finalAuthData = authData
+    let finalAuthError = authError
+
+    // Mekanisme self-healing jika user sudah ada di auth.users (Supabase Auth)
+    // tetapi record-nya tidak ada di tabel public.users (orphan).
+    if (authError && (authError.message.toLowerCase().includes('already exists') || authError.message.toLowerCase().includes('already registered'))) {
+      console.log('⚠️ User terdaftar di Supabase Auth tapi tidak ada di tabel users (orphan). Menghapus & membuat ulang secara bersih...')
+      
+      const { data: usersList, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+      if (!listError && usersList?.users) {
+        const orphan = usersList.users.find(u => u.email?.toLowerCase() === validatedData.email.toLowerCase())
+        if (orphan) {
+          console.log(`🗑️ Menghapus orphan user ID: ${orphan.id}`)
+          const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(orphan.id)
+          if (!deleteError) {
+            console.log('🔄 Membuat ulang user setelah pembersihan...')
+            const retry = await supabaseAdmin.auth.admin.createUser({
+              email: validatedData.email,
+              password: validatedData.password,
+              email_confirm: true,
+              user_metadata: {
+                full_name: validatedData.fullName,
+                phone: validatedData.phone
+              }
+            })
+            finalAuthData = retry.data
+            finalAuthError = retry.error
+          } else {
+            console.error('❌ Gagal menghapus orphan user:', deleteError.message)
+          }
+        }
+      }
+    }
+
+    if (finalAuthError) {
       console.error('❌ Auth signUp error:', {
-        message: authError.message,
-        status: authError.status,
-        code: authError.code
+        message: finalAuthError.message,
+        status: finalAuthError.status,
+        code: finalAuthError.code
       })
 
       return NextResponse.json(
         {
           success: false,
-          error: authError.message || 'Failed to create user',
+          error: finalAuthError.message || 'Failed to create user',
           details: {
-            status: authError.status,
-            code: authError.code
+            status: finalAuthError.status,
+            code: finalAuthError.code
           }
         },
-        { status: authError.status || 500 }
+        { status: finalAuthError.status || 500 }
       )
     }
 
-    if (!authData.user) {
+    if (!finalAuthData.user) {
       console.error('❌ No user returned from signUp')
       return NextResponse.json(
         { success: false, error: 'Failed to create user account' },
@@ -97,14 +125,14 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log('✅ Auth user created:', authData.user.id)
+    console.log('✅ Auth user created:', finalAuthData.user.id)
 
     // Buat record di tabel users menggunakan admin (bypass RLS)
     console.log('💾 Creating user record...')
     const { error: insertError } = await supabaseAdmin
       .from('users')
       .insert({
-        id: authData.user.id,
+        id: finalAuthData.user.id,
         email: validatedData.email,
         full_name: validatedData.fullName,
         phone: validatedData.phone,
@@ -116,7 +144,7 @@ export async function POST(request: Request) {
       console.error('❌ User insert error:', insertError)
 
       // Cleanup: hapus auth user jika insert gagal
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      await supabaseAdmin.auth.admin.deleteUser(finalAuthData.user.id)
 
       return NextResponse.json(
         { success: false, error: 'Failed to create user record' },
@@ -141,7 +169,7 @@ export async function POST(request: Request) {
       success: true,
       message: 'Pendaftaran berhasil. Kode OTP telah dikirim ke email Anda.',
       data: {
-        userId: authData.user.id,
+        userId: finalAuthData.user.id,
         email: validatedData.email,
         fullName: validatedData.fullName
       }
