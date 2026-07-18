@@ -40,6 +40,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  if (isProtectedPath && user) {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('email_verified')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (userData && !userData.email_verified) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/verify-email'
+      url.searchParams.set('email', user.email || '')
+      url.searchParams.set('provider', user.app_metadata?.provider || 'email')
+      url.searchParams.set('type', 'login')
+      return NextResponse.redirect(url)
+    }
+  }
+
   return supabaseResponse
 }
 

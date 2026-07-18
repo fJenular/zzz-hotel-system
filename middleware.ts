@@ -25,6 +25,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  const { pathname } = request.nextUrl
+
+  // Skip user check for callback and API auth routes to avoid PKCE code exchange conflict
+  if (pathname === '/callback' || pathname.startsWith('/api/auth')) {
+    return supabaseResponse
+  }
+
   let user = null
   let isNetworkError = false
 
@@ -54,7 +61,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const { pathname } = request.nextUrl
+
 
   // Public routes
   const publicRoutes = [
@@ -69,6 +76,7 @@ export async function middleware(request: NextRequest) {
     '/contact-us', 
     '/facilities', 
     '/callback',
+    '/auth/callback',
     '/booking/select-room',
   ]
   const isPublicRoute = publicRoutes.includes(pathname) ||

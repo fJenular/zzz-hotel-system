@@ -38,10 +38,12 @@ export async function POST(request: Request) {
     }
 
     // Mark email as verified in users table
-    const { error: updateError } = await supabaseAdmin
+    const { data: updatedUser, error: updateError } = await supabaseAdmin
       .from('users')
       .update({ email_verified: true })
       .eq('email', normalizedEmail)
+      .select('role')
+      .maybeSingle()
 
     if (updateError) {
       console.error('verify-otp update error:', updateError)
@@ -55,7 +57,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Email berhasil diverifikasi! Anda sekarang bisa login.',
+      message: 'Email berhasil diverifikasi!',
+      role: updatedUser?.role || 'guest',
     })
   } catch (error: any) {
     console.error('verify-otp error:', error)

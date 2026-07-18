@@ -75,28 +75,21 @@ export default function ProfilePage() {
     setMessage(null)
 
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
-      const filePath = `avatars/${fileName}`
+      const formData = new FormData()
+      formData.append('file', file)
 
-      const { error: uploadError } = await supabase.storage
-        .from('profiles')
-        .upload(filePath, file)
+      const res = await fetch('/api/profile/upload-avatar', {
+        method: 'POST',
+        body: formData,
+      })
 
-      if (uploadError) throw uploadError
+      const json = await res.json()
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('profiles')
-        .getPublicUrl(filePath)
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Gagal mengunggah foto profil')
+      }
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ avatar_url: publicUrl })
-        .eq('id', user.id)
-
-      if (updateError) throw updateError
-
-      setAvatarUrl(publicUrl)
+      setAvatarUrl(json.publicUrl)
       setMessage({ type: 'success', text: 'Foto profil berhasil diupdate!' })
     } catch (err: any) {
       console.error('Upload error:', err)

@@ -86,6 +86,8 @@ function VerifyEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
+  const provider = searchParams.get('provider') || 'email' // 'google' untuk Google OAuth
+  const type = searchParams.get('type') || 'register' // 'register' atau 'login'
 
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''))
   const [loading, setLoading] = useState(false)
@@ -138,7 +140,24 @@ function VerifyEmailContent() {
         setOtp(Array(6).fill(''))
       } else {
         setSuccess(true)
-        setTimeout(() => router.push('/login?verified=1'), 2500)
+        if (provider === 'google') {
+          // Redirect langsung ke dashboard karena sesi Google sudah aktif
+          const role = json.role || 'guest'
+          const roleRedirects: Record<string, string> = {
+            super_admin: '/admin/dashboard',
+            admin: '/admin/dashboard',
+            manager: '/manager/dashboard',
+            receptionist: '/receptionist/dashboard',
+            rest_staff: '/restaurant/dashboard',
+            housekeeping: '/housekeeping/dashboard',
+            guest: '/dashboard',
+          }
+          const redirectUrl = roleRedirects[role] || '/dashboard'
+          setTimeout(() => router.push(redirectUrl), 2500)
+        } else {
+          // Email biasa diarahkan ke login
+          setTimeout(() => router.push('/login?verified=1'), 2500)
+        }
       }
     } catch (err) {
       setError('Terjadi kesalahan jaringan. Silakan coba lagi.')
@@ -176,10 +195,18 @@ function VerifyEmailContent() {
   }
 
   if (success) {
+    const successTitle = provider === 'google'
+      ? (type === 'register' ? 'Registrasi Berhasil!' : 'Verifikasi Berhasil!')
+      : 'Email Terverifikasi!'
+
+    const successDesc = provider === 'google'
+      ? (type === 'register' ? 'Akun Google Anda berhasil diaktifkan. Mengarahkan ke dashboard…' : 'Selamat datang kembali! Mengarahkan ke dashboard…')
+      : 'Akun Anda berhasil diaktifkan. Mengarahkan ke halaman login…'
+
     return (
       <AuthShell
-        title="Email Terverifikasi!"
-        description="Akun Anda berhasil diaktifkan."
+        title={successTitle}
+        description={successDesc}
         icon={CheckCircle2}
       >
         <div className="flex flex-col items-center gap-4 py-4 text-center">
@@ -188,7 +215,7 @@ function VerifyEmailContent() {
           </div>
           <div>
             <p className="text-slate-700 font-semibold">Selamat!</p>
-            <p className="text-sm text-slate-400 mt-1">Mengarahkan ke halaman login…</p>
+            <p className="text-sm text-slate-400 mt-1">Mengarahkan…</p>
           </div>
           <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div className="h-full bg-emerald-500 rounded-full animate-[progress_2.5s_linear_forwards]" />
@@ -198,10 +225,24 @@ function VerifyEmailContent() {
     )
   }
 
+  const maskedEmail = email
+    ? `${email.slice(0, 4)}***@${email.split('@')[1]}`
+    : 'email Anda'
+
+  const titleText = provider === 'google'
+    ? (type === 'register' ? 'Verifikasi Pendaftaran' : 'Verifikasi Masuk')
+    : 'Verifikasi Email'
+
+  const descriptionText = provider === 'google'
+    ? (type === 'register'
+      ? `Terima kasih telah mendaftar dengan Google. Untuk keamanan akun Anda, kami telah mengirimkan kode verifikasi 6 digit ke email Google Anda (${maskedEmail}).`
+      : `Untuk memverifikasi identitas Anda saat masuk dengan Google, kami telah mengirimkan kode verifikasi 6 digit ke email Google Anda (${maskedEmail}).`)
+    : `Kami telah mengirimkan kode 6 digit ke ${maskedEmail}.`
+
   return (
     <AuthShell
-      title="Verifikasi Email"
-      description={`Kami telah mengirimkan kode 6 digit ke ${email ? `${email.slice(0, 4)}***@${email.split('@')[1]}` : 'email Anda'}.`}
+      title={titleText}
+      description={descriptionText}
       icon={ShieldCheck}
       footer={
         <>

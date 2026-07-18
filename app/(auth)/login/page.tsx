@@ -36,6 +36,7 @@ function LoginForm() {
   // Get redirect param from URL
   const redirectTo = searchParams.get('redirect') || '/'
   const justVerified = searchParams.get('verified') === '1'
+  const googleVerified = searchParams.get('google_verified') === '1'
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -153,6 +154,15 @@ function LoginForm() {
           </Alert>
         )}
 
+        {googleVerified && (
+          <Alert className="rounded-2xl border-blue-200 bg-blue-50">
+            <CheckCircle2 className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-700 font-medium">
+              Akun Google Anda berhasil diverifikasi! Klik <strong>"Masuk dengan Google"</strong> di bawah untuk masuk.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {error && (
           <Alert variant="destructive" className="animate-shake rounded-2xl border-red-200 bg-red-50 text-red-700">
             <AlertCircle className="h-4 w-4 text-red-500" />
@@ -264,7 +274,7 @@ function LoginForm() {
               const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                  redirectTo: `${window.location.origin}/auth/callback`,
+                  redirectTo: `${window.location.origin}/callback`,
                   queryParams: {
                     access_type: 'offline',
                     prompt: 'consent',

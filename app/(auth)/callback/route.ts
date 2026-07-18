@@ -22,88 +22,77 @@ export async function GET(request: Request) {
 
       // Tentukan apakah ini flow OAuth (Google) atau email confirmation
       const isOAuthUser = user.app_metadata?.provider === 'google'
+      const googleAvatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || ''
 
       // Check if user exists in users table
       const { data: existingUser } = await supabaseAdmin
         .from('users')
-        .select('id, email_verified, role')
+        .select('id, email, full_name, email_verified, role, avatar_url')
         .eq('id', user.id)
         .maybeSingle()
 
       if (!existingUser) {
-        // User baru — buat record (biasanya untuk Google OAuth)
+        // ── User BARU via Google OAuth ──────────────────────────────────────
+        // Buat record dengan email_verified: true langsung (karena Google sudah terverifikasi)
+        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Pengguna'
+        const email = user.email!
+
         const { error: insertError } = await supabaseAdmin.from('users').insert({
           id: user.id,
-          email: user.email!,
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+          email,
+          full_name: fullName,
           phone: user.user_metadata?.phone || '',
           role: 'guest',
-          email_verified: true // Google sudah verifikasi; email/password akan di-verify via link
+          email_verified: true, // OAuth Google langsung verified
+          avatar_url: googleAvatarUrl
         })
+
         if (insertError) {
           console.error('Callback insert error:', insertError.message)
-        } else {
-          console.log('✅ New user created in users table:', user.email)
+          return NextResponse.redirect(`${origin}/auth/auth-code-error`)
         }
+
+        console.log('✅ New Google user created in users table (verified):', email)
       } else {
-        // User sudah ada — update email_verified ke true
+        // ── User SUDAH ADA ──────────────────────────────────────────────────
+        // Pastikan email_verified ter-update ke true jika mereka login via Google
+        // Dan isi avatar_url jika belum ada di database
+        const updateData: Record<string, any> = { email_verified: true }
+        if (!existingUser.avatar_url && googleAvatarUrl) {
+          updateData.avatar_url = googleAvatarUrl
+        }
+
         const { error: updateError } = await supabaseAdmin
           .from('users')
-          .update({ email_verified: true })
+          .update(updateData)
           .eq('id', user.id)
+
         if (updateError) {
           console.error('Callback update error:', updateError.message)
-        } else {
-          console.log('✅ Email verified for user:', user.email)
         }
       }
 
-      // Ambil role terbaru dari database
+      // Ambil role terbaru dari database untuk penentuan halaman redirect
       const { data: userData } = await supabaseAdmin
         .from('users')
         .select('role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       const role = userData?.role || 'guest'
+      const roleRedirects: Record<string, string> = {
+        super_admin: '/admin/dashboard',
+        admin: '/admin/dashboard',
+        manager: '/manager/dashboard',
+        receptionist: '/receptionist/dashboard',
+        rest_staff: '/restaurant/dashboard',
+        housekeeping: '/housekeeping/dashboard',
+        guest: '/dashboard',
+      }
 
-      // Redirect berdasarkan provider dan role
-      let redirectPath: string
-
-      if (isOAuthUser) {
-        // Google OAuth — redirect berdasarkan role seperti biasa
-        if (role === 'admin' || role === 'super_admin') {
-          redirectPath = '/admin/dashboard'
-        } else if (role === 'manager') {
-          redirectPath = '/manager/dashboard'
-        } else if (role === 'receptionist') {
-          redirectPath = '/receptionist/dashboard'
-        } else if (role === 'rest_staff') {
-          redirectPath = '/restaurant/dashboard'
-        } else if (role === 'housekeeping') {
-          redirectPath = '/housekeeping/dashboard'
-        } else {
-          // Guest redirect ke home
-          redirectPath = '/'
-        }
-      } else {
-        // Email confirmation — redirect ke halaman sukses verifikasi atau home
-        if (next !== '/') {
-          redirectPath = next
-        } else if (role === 'admin' || role === 'super_admin') {
-          redirectPath = '/admin/dashboard'
-        } else if (role === 'manager') {
-          redirectPath = '/manager/dashboard'
-        } else if (role === 'receptionist') {
-          redirectPath = '/receptionist/dashboard'
-        } else if (role === 'rest_staff') {
-          redirectPath = '/restaurant/dashboard'
-        } else if (role === 'housekeeping') {
-          redirectPath = '/housekeeping/dashboard'
-        } else {
-          // Guest redirect ke home
-          redirectPath = '/'
-        }
+      let redirectPath = roleRedirects[role] || '/dashboard'
+      if (!isOAuthUser && next !== '/') {
+        redirectPath = next
       }
 
       return NextResponse.redirect(`${origin}${redirectPath}`)
