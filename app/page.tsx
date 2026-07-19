@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
-import {
+import { 
   Calendar, Users, ArrowRight, Bell, Sparkles, HelpCircle, LogOut,
   Star, Compass, MessageSquare, User, LayoutDashboard, Utensils,
   Home, ChevronDown, Minus, Plus
@@ -15,7 +15,7 @@ import { DateRangePicker } from '@/components/landing/date-range-picker'
 export default function HomePage() {
   const router = useRouter()
   const supabase = createBrowserSupabaseClient()
-
+  
   // Search parameters for right widget
   const [formData, setFormData] = useState({
     checkIn: new Date().toISOString().split('T')[0],
@@ -39,14 +39,6 @@ export default function HomePage() {
   const [guestsOpen, setGuestsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const guestsRef = useRef<HTMLDivElement>(null)
-  const [greeting, setGreeting] = useState("Selamat Datang")
-
-  useEffect(() => {
-    fetch("/greeting.txt")
-      .then(res => res.text())
-      .then(text => setGreeting(text))
-      .catch(() => { })
-  }, [])
 
   // Fetch logged in user
   useEffect(() => {
@@ -94,7 +86,7 @@ export default function HomePage() {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
-    } catch (e) { }
+    } catch (e) {}
     await supabase.auth.signOut()
     setUser(null)
     setAvatarDropdownOpen(false)
@@ -145,13 +137,13 @@ export default function HomePage() {
           <p className="text-xs font-semibold text-gray-400 px-4 uppercase tracking-wider">Lainnya</p>
           <nav className="space-y-1">
             {user && user.role !== 'guest' && (
-              <Link
+              <Link 
                 href={
                   user.role === 'admin' || user.role === 'super_admin' ? '/admin/dashboard' :
-                    user.role === 'manager' ? '/manager/dashboard' :
-                      user.role === 'receptionist' ? '/receptionist/dashboard' :
-                        user.role === 'rest_staff' ? '/restaurant/dashboard' :
-                          user.role === 'housekeeping' ? '/housekeeping/dashboard' : '/dashboard'
+                  user.role === 'manager' ? '/manager/dashboard' :
+                  user.role === 'receptionist' ? '/receptionist/dashboard' :
+                  user.role === 'rest_staff' ? '/restaurant/dashboard' :
+                  user.role === 'housekeeping' ? '/housekeeping/dashboard' : '/dashboard'
                 }
                 className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-600 bg-rose-50/50 rounded-xl transition-all duration-200"
               >
@@ -161,14 +153,14 @@ export default function HomePage() {
             )}
             {user && user.role === 'guest' && (
               <>
-                <Link
+                <Link 
                   href="/my-bookings"
                   className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200"
                 >
                   <Calendar className="w-5 h-5" />
                   <span>Pesanan Saya</span>
                 </Link>
-                <Link
+                <Link 
                   href="/restaurant/order"
                   className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200"
                 >
@@ -182,7 +174,7 @@ export default function HomePage() {
               <span>Bantuan & Dukungan</span>
             </Link>
             {user && user.role !== 'guest' && (
-              <button
+              <button 
                 onClick={() => setShowLogoutModal(true)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all duration-200"
               >
@@ -202,21 +194,18 @@ export default function HomePage() {
 
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col lg:flex-row min-w-0">
-
+        
         {/* CENTER COLUMN: Main Content */}
         <main className="flex-1 overflow-y-auto px-6 py-8 space-y-8 max-w-5xl">
-          {/* Header Greeting */}
+           {/* Header Greeting */}
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div className="animate-fade-in">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                {greeting.replace("Tamu Terhormat", "")}
-                <span className="text-rose-500">
-                  {user?.full_name || "Tamu Terhormat"}
-                </span>
+                Selamat Datang, <span className="text-rose-500">{user?.full_name || 'Tamu Terhormat'}</span>
               </h1>
               <p className="text-sm text-gray-500 mt-1">Jelajahi fitur premium kami dan kelola pemesanan Anda dengan mudah.</p>
             </div>
-
+            
             {/* Top Toolbar with Avatar Dropdown */}
             <div className="flex items-center gap-4">
               <button className="p-2.5 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition relative">
@@ -230,9 +219,9 @@ export default function HomePage() {
                     className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md hover:opacity-80 transition"
                   >
                     {avatarUrl ? (
-                      <Image
-                        src={avatarUrl}
-                        alt="Profile"
+                      <Image 
+                        src={avatarUrl} 
+                        alt="Profile" 
                         width={40}
                         height={40}
                         className="w-full h-full object-cover"
@@ -289,7 +278,7 @@ export default function HomePage() {
                   )}
                 </div>
               ) : (
-                <Link
+                <Link 
                   href="/login"
                   className="px-4 py-2 text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition shadow-sm shadow-rose-200"
                 >
@@ -306,7 +295,7 @@ export default function HomePage() {
               <h2 className="text-3xl font-black tracking-tight text-gray-900">Diskon 10%!</h2>
               <p className="text-sm text-gray-600 font-medium">Dapatkan potongan harga khusus di hari-hari tertentu. Pesan tempat menginap Anda sekarang.</p>
             </div>
-            <button
+            <button 
               onClick={() => router.push('/booking/select-room')}
               className="p-4 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition shadow-lg shadow-rose-200"
             >
@@ -355,7 +344,7 @@ export default function HomePage() {
                 Pesan Kamar Sekarang <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
-
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Bale Card */}
               <div className="bg-white rounded-[24px] border border-gray-100/80 overflow-hidden shadow-sm hover:shadow-xl hover:border-rose-100/50 transition-all duration-300 flex flex-col justify-between group">
@@ -378,7 +367,7 @@ export default function HomePage() {
                   <p className="text-xs text-gray-500 leading-relaxed font-medium">
                     Bale adalah kamar peristirahatan tradisional yang nyaman dengan sentuhan dekorasi khas Nusantara. Cocok untuk pasangan atau tamu solo yang mencari kehangatan budaya Indonesia.
                   </p>
-
+                  
                   {/* Info Badge */}
                   <div className="border-t border-gray-50 pt-4 space-y-3">
                     <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Spesifikasi & Layanan</p>
@@ -413,7 +402,7 @@ export default function HomePage() {
                   <p className="text-xs text-gray-500 leading-relaxed font-medium">
                     Serambi menawarkan kamar luas dengan beranda khas pedesaan Nusantara. Desain arsitektur klasik dipadu kemewahan modern memberikan suasana santai yang otentik.
                   </p>
-
+                  
                   {/* Info Badge */}
                   <div className="border-t border-gray-50 pt-4 space-y-3">
                     <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Spesifikasi & Layanan</p>
@@ -448,7 +437,7 @@ export default function HomePage() {
                   <p className="text-xs text-gray-500 leading-relaxed font-medium">
                     Pendopo adalah akomodasi keluarga yang terinspirasi dari ruang pertemuan agung tradisional Jawa. Sangat lapang dengan area bermain anak dan dekorasi adat menawan.
                   </p>
-
+                  
                   {/* Info Badge */}
                   <div className="border-t border-gray-50 pt-4 space-y-3">
                     <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Spesifikasi & Layanan</p>
@@ -483,7 +472,7 @@ export default function HomePage() {
                   <p className="text-xs text-gray-500 leading-relaxed font-medium">
                     Puri menyajikan keagungan istana raja-raja Nusantara. Suite ultra-mewah dengan ruang tamu terpisah, fasilitas premium terunggul, dan layanan butler personal.
                   </p>
-
+                  
                   {/* Info Badge */}
                   <div className="border-t border-gray-50 pt-4 space-y-3">
                     <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Spesifikasi & Layanan</p>
@@ -532,7 +521,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-gray-50/50 border border-gray-100 rounded-xl space-y-3">
                 <div className="flex gap-1.5 text-amber-400">
-                  {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                  {[1,2,3,4,5].map(i => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
                 </div>
                 <p className="text-xs text-gray-500 italic leading-relaxed">
                   &ldquo;Pengalaman menginap akhir pekan kami di ZZZ Hotel sangat luar biasa. Detail kamar premium dan layanan kebersihan kamar sangat cepat dan bersih.&rdquo;
@@ -549,7 +538,7 @@ export default function HomePage() {
               </div>
               <div className="p-4 bg-gray-50/50 border border-gray-100 rounded-xl space-y-3">
                 <div className="flex gap-1.5 text-amber-400">
-                  {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                  {[1,2,3,4,5].map(i => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
                 </div>
                 <p className="text-xs text-gray-500 italic leading-relaxed">
                   &ldquo;Sebuah pengalaman mengesankan! Proses pemesanan sangat mudah dan pembayaran kartu kredit berjalan lancar. Sangat merekomendasikan kamar Suite untuk keluarga.&rdquo;
@@ -589,8 +578,9 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setGuestsOpen(prev => !prev)}
-                  className={`w-full bg-white border rounded-2xl px-5 py-3.5 flex flex-col transition-all shadow-sm text-left cursor-pointer ${guestsOpen ? 'border-rose-400 bg-rose-50/30' : 'border-slate-100 hover:border-rose-200 hover:bg-rose-50/30'
-                    }`}
+                  className={`w-full bg-white border rounded-2xl px-5 py-3.5 flex flex-col transition-all shadow-sm text-left cursor-pointer ${
+                    guestsOpen ? 'border-rose-400 bg-rose-50/30' : 'border-slate-100 hover:border-rose-200 hover:bg-rose-50/30'
+                  }`}
                 >
                   <span className="block text-[9px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">TAMU</span>
                   <div className="flex items-center justify-between">
@@ -598,7 +588,7 @@ export default function HomePage() {
                       <Users className="w-4 h-4 text-rose-500 shrink-0" />
                       <span className="text-xs font-bold text-slate-700">{formData.guests} Tamu</span>
                     </div>
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${guestsOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${ guestsOpen ? 'rotate-180' : '' }`} />
                   </div>
                 </button>
 
@@ -638,15 +628,16 @@ export default function HomePage() {
                       </button>
                     </div>
                     <div className="mt-3 flex gap-1.5 flex-wrap">
-                      {[1, 2, 3, 4, 5, 6].map(n => (
+                      {[1,2,3,4,5,6].map(n => (
                         <button
                           key={n}
                           type="button"
                           onClick={() => { setFormData(prev => ({ ...prev, guests: n })); setGuestsOpen(false) }}
-                          className={`flex-1 min-w-[36px] py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${formData.guests === n
-                            ? 'bg-rose-500 text-white border-rose-500'
-                            : 'bg-gray-50 text-gray-600 border-gray-100 hover:border-rose-300 hover:text-rose-500'
-                            }`}
+                          className={`flex-1 min-w-[36px] py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                            formData.guests === n
+                              ? 'bg-rose-500 text-white border-rose-500'
+                              : 'bg-gray-50 text-gray-600 border-gray-100 hover:border-rose-300 hover:text-rose-500'
+                          }`}
                         >
                           {n}
                         </button>
@@ -664,7 +655,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <button
+            <button 
               type="submit"
               className="w-full py-3.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl transition shadow-lg shadow-rose-200 text-center block text-sm"
             >
@@ -685,7 +676,7 @@ export default function HomePage() {
                 <span className="text-[10px] text-gray-500">🛏️ 2 Bed | 🚿 2 Kamar Mandi</span>
               </div>
             </div>
-            <button
+            <button 
               onClick={() => router.push('/booking/select-room')}
               className="w-full py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-bold rounded-xl text-xs transition"
             >
@@ -705,15 +696,15 @@ export default function HomePage() {
               <h3 className="text-lg font-bold text-gray-900">Konfirmasi Keluar</h3>
               <p className="text-sm text-gray-500">Apakah Anda yakin ingin keluar dari sistem ZZZ Hotel?</p>
             </div>
-
+            
             <div className="flex gap-3">
-              <button
+              <button 
                 onClick={() => setShowLogoutModal(false)}
                 className="flex-1 py-2.5 px-4 text-xs font-bold border border-gray-200 hover:bg-gray-50 rounded-xl text-gray-600 transition"
               >
                 Batal
               </button>
-              <button
+              <button 
                 onClick={handleLogout}
                 className="flex-1 py-2.5 px-4 text-xs font-bold bg-rose-500 hover:bg-rose-600 rounded-xl text-white transition shadow-md shadow-rose-200"
               >
