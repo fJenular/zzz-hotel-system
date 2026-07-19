@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { useState, useEffect, useRef } from 'react'
-import { 
-  Users, Bed, Bath, Wifi, Tv, Coffee, Star, MapPin, 
+import {
+  Users, Bed, Bath, Wifi, Tv, Coffee, Star, MapPin,
   ArrowLeft, ShieldCheck, ChevronLeft, ChevronRight,
-  Home, Compass, Sparkles, MessageSquare, User, Calendar, LogOut, Utensils
+  Home, Compass, Sparkles, MessageSquare, User, Calendar, LogOut, Utensils, Minus, Plus
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -22,9 +22,15 @@ export default function RoomDetailPage() {
   // State for booking widget
   const [checkIn, setCheckIn] = useState(searchParams.get('checkIn') || new Date().toISOString().split('T')[0])
   const [checkOut, setCheckOut] = useState(searchParams.get('checkOut') || new Date(Date.now() + 86400000).toISOString().split('T')[0])
-  const [guests, setGuests] = useState(parseInt(searchParams.get('guests') || '2'))
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   
+  // Guest details (replaces single guests count)
+  const [adults, setAdults] = useState<number>(parseInt(searchParams.get('adults') || '1'))
+  const [children, setChildren] = useState<number>(parseInt(searchParams.get('children') || '0'))
+  const [extraBed, setExtraBed] = useState(searchParams.get('extraBed') === 'true')
+  const [notes, setNotes] = useState('')
+  
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
   // Extra Services
   const [extraServices, setExtraServices] = useState({
     roomClean: false,
@@ -34,7 +40,7 @@ export default function RoomDetailPage() {
   // User info (simple for midtrans)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
-  
+
   const [activeTab, setActiveTab] = useState('description')
   const [user, setUser] = useState<any>(null)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -190,18 +196,22 @@ export default function RoomDetailPage() {
      typeName.includes('suite') || typeName.includes('samudra') || typeName.includes('puri') ? '1 King Bed + 1 Queen Sofa Bed' :
      typeName.includes('candi') || typeName.includes('serambi') ? '1 King Bed + 1 Sofa Bed' : '1 King Bed atau 2 Single Bed')
   const maxOcc = room.room_types?.max_occupancy || 2
+  const maxAdults = room.room_types?.max_adults || maxOcc
+  const maxChildren = room.room_types?.max_children || 2
   const roomFacilities = parseFacilities(room.room_types?.facilities)
   const roomAmenities = parseFacilities(room.room_types?.amenities)
 
   // Calculations
+  const totalGuests = adults + children
   const dateDiff = checkIn && checkOut ? new Date(checkOut).getTime() - new Date(checkIn).getTime() : 0
   const nights = dateDiff > 0 ? Math.ceil(dateDiff / (1000 * 60 * 60 * 24)) : 1
   
   const basePricePerNight = room.room_types.base_price
   const cleanPrice = extraServices.roomClean ? 150000 * nights : 0
-  const breakfastPrice = extraServices.breakfast ? 100000 * guests * nights : 0
-  
-  const subtotal = (basePricePerNight * nights) + cleanPrice + breakfastPrice
+  const breakfastPrice = extraServices.breakfast ? 100000 * totalGuests * nights : 0
+  const extraBedPrice = extraBed ? 200000 * nights : 0
+
+  const subtotal = (basePricePerNight * nights) + cleanPrice + breakfastPrice + extraBedPrice
   const discount = Math.round(subtotal * 0.10)
   const serviceFee = 50000
   const totalCost = subtotal - discount + serviceFee
@@ -225,7 +235,7 @@ export default function RoomDetailPage() {
           room_id: room.id,
           check_in: checkIn,
           check_out: checkOut,
-          guests_count: guests,
+          guests_count: totalGuests,
           total_price: totalCost,
           status: 'pending'
         })
@@ -286,7 +296,7 @@ export default function RoomDetailPage() {
     }
   }
 
-  const loginRedirectUrl = `/login?redirect=/rooms/${room?.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`
+  const loginRedirectUrl = `/login?redirect=/rooms/${room?.id}?checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&children=${children}`
 
   return (
     <div className="flex min-h-screen bg-gray-50/50 font-sans text-gray-800 antialiased">
@@ -630,14 +640,47 @@ export default function RoomDetailPage() {
                         className="w-full px-3 py-2 border border-gray-100 rounded-xl text-xs font-semibold text-gray-800 focus:border-rose-500 focus:ring-0 bg-gray-50/50" required />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Jumlah Tamu</label>
-                    <select value={guests} onChange={(e) => setGuests(parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-100 rounded-xl text-xs font-semibold text-gray-800 focus:border-rose-500 focus:ring-0 bg-gray-50/50 cursor-pointer">
-                      {[1,2,3,4,5,6].map(num => (
-                        <option key={num} value={num}>{num} Tamu</option>
-                      ))}
-                    </select>
+
+                  {/* Guest Details - replaces old guest count */}
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Detail Pemesan</label>
+                    
+                    {/* Adults */}
+                    <div className="flex items-center justify-between p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl">
+                      <span className="text-[11px] font-semibold text-gray-700">Dewasa</span>
+                      <div className="flex items-center gap-3">
+                        <button type="button" onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition">
+                          <Minus className="w-3 h-3 text-gray-600" />
+                        </button>
+                        <span className="text-sm font-bold text-gray-800 w-6 text-center">{adults}</span>
+                        <button type="button" onClick={() => setAdults(Math.min(maxAdults, adults + 1))} disabled={adults >= maxAdults}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition">
+                          <Plus className="w-3 h-3 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Children */}
+                    <div className="flex items-center justify-between p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl">
+                      <span className="text-[11px] font-semibold text-gray-700">Anak</span>
+                      <div className="flex items-center gap-3">
+                        <button type="button" onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition">
+                          <Minus className="w-3 h-3 text-gray-600" />
+                        </button>
+                        <span className="text-sm font-bold text-gray-800 w-6 text-center">{children}</span>
+                        <button type="button" onClick={() => setChildren(Math.min(maxChildren, children + 1))} disabled={children >= maxChildren}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition">
+                          <Plus className="w-3 h-3 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Total guests info */}
+                    <p className="text-[10px] text-gray-400 text-right">
+                      Total: {totalGuests} tamu (Maks. {maxOcc})
+                    </p>
                   </div>
                 </div>
 
@@ -660,6 +703,28 @@ export default function RoomDetailPage() {
                     </div>
                     <span className="text-[10px] font-bold text-rose-500">+Rp 100.000/tamu</span>
                   </label>
+
+                  {/* Extra Bed */}
+                  <label className="flex items-center justify-between p-2.5 bg-gray-50/50 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50">
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" checked={extraBed} onChange={(e) => setExtraBed(e.target.checked)}
+                        className="w-4 h-4 text-rose-500 border-gray-300 rounded focus:ring-0" />
+                      <span className="text-[11px] font-semibold text-gray-700">Tambah Ranjang (Extra Bed)</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-rose-500">+Rp 200.000/malam</span>
+                  </label>
+                </div>
+
+                {/* Notes */}
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-bold text-gray-900">Catatan</h4>
+                  <textarea
+                    placeholder="Tulis catatan khusus untuk pemesanan (opsional)..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-100 rounded-xl text-xs font-semibold text-gray-700 placeholder-gray-400 focus:border-rose-500 focus:ring-0 bg-gray-50/50 resize-none"
+                  />
                 </div>
 
                 {/* Price Breakdown */}
@@ -676,8 +741,14 @@ export default function RoomDetailPage() {
                   )}
                   {extraServices.breakfast && (
                     <div className="flex justify-between text-gray-500">
-                      <span>Layanan Sarapan ({guests} tamu)</span>
+                      <span>Layanan Sarapan ({totalGuests} tamu)</span>
                       <span className="font-semibold text-gray-700">Rp {breakfastPrice.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {extraBed && (
+                    <div className="flex justify-between text-gray-500">
+                      <span>Tambah Ranjang (Extra Bed)</span>
+                      <span className="font-semibold text-gray-700">Rp {extraBedPrice.toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-gray-500">
